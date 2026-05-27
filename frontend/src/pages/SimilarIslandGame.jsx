@@ -4,7 +4,7 @@ import DrawingCanvas from '../components/DrawingCanvas';
 import FractionPattern from '../components/FractionPattern';
 import '../components/components.css';
 
-const SimilarIslandGame = ({ studentId, studentNickname, gameSession, onGameEnd, onExitToLobby }) => {
+const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, gameSession, onGameEnd, onExitToLobby }) => {
   const [currentProblem, setCurrentProblem] = useState('2/3 + 1/3 = ?');
   const [mechanicType, setMechanicType] = useState(gameSession.mechanicType);
   const [answer, setAnswer] = useState('');
@@ -317,7 +317,10 @@ const SimilarIslandGame = ({ studentId, studentNickname, gameSession, onGameEnd,
     <div
       className="wireframe-game-container"
       style={{
-        background: '#d4c5c9',
+        backgroundImage: 'url(/SimilarBackground.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
         minHeight: '100vh',
         padding: '20px',
         display: 'flex',
@@ -429,7 +432,11 @@ const SimilarIslandGame = ({ studentId, studentNickname, gameSession, onGameEnd,
                 height: '100%',
                 background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #888 10px, #888 12px)',
               }}></div>
-              <span style={{ position: 'relative', zIndex: 1, fontSize: '48px' }}>🧙</span>
+              <img
+                src={selectedCharacter?.name?.toLowerCase().includes('girl') ? '/Female.png' : '/Male.png'}
+                alt="Player"
+                style={{ position: 'relative', zIndex: 1, width: '120px', height: '120px', objectFit: 'contain' }}
+              />
             </div>
             <h3 style={{ margin: 0, fontSize: '20px' }}>Player</h3>
           </div>
