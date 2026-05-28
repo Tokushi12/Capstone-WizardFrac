@@ -1,34 +1,36 @@
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import './components.css';
 
-const FractionPattern = forwardRef(({ problem, onAnswerSubmit, onWrongAnswer, onStepCorrect }, ref) => {
-  const [denominator, setDenominator] = useState('');
-  const [resultNumerator, setResultNumerator] = useState('');
-  const [resultDenominator, setResultDenominator] = useState('');
-  const [mixedWhole, setMixedWhole] = useState('');
-  const [mixedNumerator, setMixedNumerator] = useState('');
-  const [step, setStep] = useState(1);
-  const [stepStatus, setStepStatus] = useState([null, null, null, null]);
+const FractionPattern = forwardRef(({ problem, onAnswerSubmit, onWrongAnswer, onStepCorrect, onRequestNewProblem }, ref) => {
   const [correctNum1, setCorrectNum1] = useState(0);
   const [correctNum2, setCorrectNum2] = useState(0);
-  const [correctDen, setCorrectDen] = useState(0);
-  const [operator, setOperator] = useState('+');
-  const [step4Whole, setStep4Whole] = useState(0);
-  const [step4Remainder, setStep4Remainder] = useState(0);
+  const [correctDen,  setCorrectDen]  = useState(0);
+  const [operator,    setOperator]    = useState('+');
 
-  const form1Ref = useRef();
-  const form2Ref = useRef();
-  const form3Ref = useRef();
-  const form4Ref = useRef();
+  const [denValue,     setDenValue]     = useState('');
+  const [exprValue,    setExprValue]    = useState('');
+  const [answerValue,  setAnswerValue]  = useState('');
+  const [fracNumValue, setFracNumValue] = useState('');
+  const [fracDenValue, setFracDenValue] = useState('');
 
-  useImperativeHandle(ref, () => ({
-    submitCurrentStep: () => {
-      if (step === 1) form1Ref.current?.requestSubmit();
-      else if (step === 2) form2Ref.current?.requestSubmit();
-      else if (step === 3) form3Ref.current?.requestSubmit();
-      else if (step === 4) form4Ref.current?.requestSubmit();
-    }
-  }));
+  const [lockedDen,     setLockedDen]     = useState(null);
+  const [lockedExpr,    setLockedExpr]    = useState(null);
+  const [lockedAns,     setLockedAns]     = useState(null);
+  const [lockedFracNum, setLockedFracNum] = useState(null);
+  const [lockedFracDen, setLockedFracDen] = useState(null);
+
+  const [resultNum, setResultNum] = useState(null);
+
+  // phase: 'den' | 'expr' | 'answer' | 'fraction' | 'ready' | 'result' | 'done' | 'wrong'
+  const [phase, setPhase] = useState('den');
+
+  const [errors, setErrors] = useState([]);
+
+  const denInputRef    = useRef();
+  const exprInputRef   = useRef();
+  const answerInputRef = useRef();
+  const fracNumRef     = useRef();
+  const fracDenRef     = useRef();
 
   useEffect(() => {
     const match = problem.match(/(\d+)\/(\d+)\s*([+-])\s*(\d+)\/(\d+)/);
@@ -40,272 +42,405 @@ const FractionPattern = forwardRef(({ problem, onAnswerSubmit, onWrongAnswer, on
     }
   }, [problem]);
 
+  useEffect(() => {
+    if (phase === 'den')      setTimeout(() => denInputRef.current?.focus(),    50);
+    if (phase === 'expr')     setTimeout(() => exprInputRef.current?.focus(),   50);
+    if (phase === 'answer')   setTimeout(() => answerInputRef.current?.focus(), 50);
+    if (phase === 'fraction') setTimeout(() => fracNumRef.current?.focus(),     50);
+  }, [phase]);
+
   const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
 
-  const calculateCorrectAnswers = () => {
-    const sumDiff = operator === '+' ? correctNum1 + correctNum2 : correctNum1 - correctNum2;
-    const divisor = gcd(Math.abs(sumDiff), correctDen);
-    return {
-      sumDiff,
-      nonSimplified: { numerator: sumDiff, denominator: correctDen },
-      simplified: { numerator: sumDiff / divisor, denominator: correctDen / divisor }
-    };
+  // Derived correct answer values
+  const correctResult = operator === '+' ? correctNum1 + correctNum2 : correctNum1 - correctNum2;
+  const divisor       = correctDen > 0 ? gcd(Math.abs(correctResult), correctDen) : 1;
+  const simplifiedNum = correctDen > 0 ? correctResult / divisor : correctResult;
+  const simplifiedDen = correctDen > 0 ? correctDen / divisor : 1;
+  const isWholeAnswer = simplifiedDen === 1;
+
+  /* ── Lock each field in turn, no validation until Cast Spell ── */
+  const handleDenSubmit = () => {
+    const v = denValue.trim();
+    if (!v) return;
+    setLockedDen(v);
+    setPhase('expr');
   };
 
-  const handleDenominatorSubmit = (e) => {
-    e.preventDefault();
-    const isCorrect = parseInt(denominator) === correctDen;
-    const newStatus = [...stepStatus];
-    newStatus[0] = isCorrect ? 'correct' : 'wrong';
-    setStepStatus(newStatus);
-    if (isCorrect) {
-      onStepCorrect?.();
-      setStep(2);
-    } else {
-      onWrongAnswer?.('For similar fractions, the denominator stays the same. Look at the denominators in the problem!', denominator);
-      setDenominator('');
-    }
+  const handleExprSubmit = () => {
+    const v = exprValue.trim();
+    if (!v) return;
+    setLockedExpr(v);
+    setExprValue('');
+    setPhase('answer');
   };
 
-  const handleResultNumeratorSubmit = (e) => {
-    e.preventDefault();
-    const { sumDiff } = calculateCorrectAnswers();
-    const isCorrect = parseInt(resultNumerator) === sumDiff;
-    const newStatus = [...stepStatus];
-    newStatus[1] = isCorrect ? 'correct' : 'wrong';
-    setStepStatus(newStatus);
-    if (isCorrect) {
-      onStepCorrect?.();
-      setResultNumerator('');
-      setResultDenominator('');
-      setStep(3);
-    } else {
-      onWrongAnswer?.('Only add or subtract the top numbers. The denominator does not change in this step!', resultNumerator);
-      setResultNumerator('');
-    }
+  const handleAnswerSubmit = () => {
+    const v = answerValue.trim();
+    if (!v) return;
+    setLockedAns(v);
+    setAnswerValue('');
+    setPhase('fraction');
   };
 
-  const handleFinalAnswerSubmit = (e) => {
-    e.preventDefault();
-    const { sumDiff, nonSimplified, simplified } = calculateCorrectAnswers();
-    const userNum = parseInt(resultNumerator);
-    const userDen = parseInt(resultDenominator);
-    const isWholeAnswer = simplified.denominator === 1;
-
-    let isCorrect;
+  const handleFracNumSubmit = () => {
+    const v = fracNumValue.trim();
+    if (!v) return;
+    setLockedFracNum(v);
+    setFracNumValue('');
     if (isWholeAnswer) {
-      isCorrect = userNum === simplified.numerator;
+      setPhase('ready');
     } else {
-      isCorrect =
-        (userNum === nonSimplified.numerator && userDen === nonSimplified.denominator) ||
-        (userNum === simplified.numerator && userDen === simplified.denominator);
+      setTimeout(() => fracDenRef.current?.focus(), 50);
     }
+  };
 
-    const newStatus = [...stepStatus];
-    newStatus[2] = isCorrect ? 'correct' : 'wrong';
-    setStepStatus(newStatus);
+  const handleFracDenSubmit = () => {
+    const v = fracDenValue.trim();
+    if (!v) return;
+    setLockedFracDen(v);
+    setFracDenValue('');
+    setPhase('ready');
+  };
 
-    if (!isCorrect) {
-      if (isWholeAnswer) {
-        onWrongAnswer?.(`The fraction simplifies to a whole number. ${sumDiff} ÷ ${correctDen} = ${simplified.numerator}`, resultNumerator);
-      } else {
-        onWrongAnswer?.('Use the numerator from Step 2 and the common denominator from Step 1 as your answer!', `${resultNumerator}/${resultDenominator}`);
+  /* ── Cast Spell: validate everything at once ── */
+  const handleCastSpell = () => {
+    if (phase !== 'ready') return;
+
+    const errs = [];
+
+    // Check denominator (small circle)
+    const denOk = parseInt(lockedDen) === correctDen;
+    if (!denOk) errs.push(`Denominator: should be ${correctDen}, you entered ${lockedDen}.`);
+
+    // Check expression (big circle)
+    const exprMatch = (lockedExpr || '').trim().match(/^(-?\d+)\s*([+-])\s*(\d+)$/);
+    if (!exprMatch) {
+      errs.push(`Expression: format should be like ${correctNum1}${operator}${correctNum2}, got "${lockedExpr}".`);
+    } else {
+      const tA = parseInt(exprMatch[1]), tOp = exprMatch[2], tB = parseInt(exprMatch[3]);
+      if (tA !== correctNum1 || tB !== correctNum2 || tOp !== operator) {
+        errs.push(`Expression: should be ${correctNum1} ${operator} ${correctNum2}, got "${lockedExpr}".`);
       }
-      setResultNumerator('');
-      setResultDenominator('');
-      return;
     }
 
-    onStepCorrect?.();
+    // Check expression answer (big circle)
+    if (parseInt(lockedAns) !== correctResult) {
+      errs.push(`Answer: ${correctNum1} ${operator} ${correctNum2} = ${correctResult}, not ${lockedAns}.`);
+    }
 
+    // Check final fraction (bottom)
+    const userFracNum = parseInt(lockedFracNum);
     if (isWholeAnswer) {
-      onAnswerSubmit(`${simplified.numerator}`);
-      return;
-    }
-
-    const isImproper = Math.abs(sumDiff) > correctDen;
-    if (isImproper) {
-      const whole = Math.floor(Math.abs(sumDiff) / correctDen);
-      const remainder = Math.abs(sumDiff) % correctDen;
-      setStep4Whole(whole);
-      setStep4Remainder(remainder);
-      setStep(4);
+      if (userFracNum !== simplifiedNum) {
+        errs.push(`Result: should be ${simplifiedNum}, you entered ${lockedFracNum}.`);
+      }
     } else {
-      onAnswerSubmit(`${simplified.numerator}/${simplified.denominator}`);
+      const userFracDen = parseInt(lockedFracDen);
+      const okSimplified   = userFracNum === simplifiedNum  && userFracDen === simplifiedDen;
+      const okUnsimplified = userFracNum === correctResult   && userFracDen === correctDen;
+      if (!okSimplified && !okUnsimplified) {
+        errs.push(`Result: should be ${simplifiedNum}/${simplifiedDen}, you entered ${lockedFracNum}/${lockedFracDen}.`);
+      }
     }
-  };
 
-  const handleMixedNumberSubmit = (e) => {
-    e.preventDefault();
-    const userWhole = parseInt(mixedWhole);
-    const userRemainder = step4Remainder > 0 ? parseInt(mixedNumerator) : 0;
-    const isCorrect = userWhole === step4Whole && userRemainder === step4Remainder;
-    const newStatus = [...stepStatus];
-    newStatus[3] = isCorrect ? 'correct' : 'wrong';
-    setStepStatus(newStatus);
-
-    if (!isCorrect) {
-      onWrongAnswer?.('Divide the numerator by the denominator. The quotient is the whole number, and the remainder is the new numerator!', step4Remainder > 0 ? `${mixedWhole} ${mixedNumerator}/${correctDen}` : mixedWhole);
-      setMixedWhole('');
-      setMixedNumerator('');
+    if (errs.length > 0) {
+      setErrors(errs);
+      setPhase('wrong');
+      onWrongAnswer?.(errs.join(' | '), `${lockedExpr}=${lockedAns}`);
+      setTimeout(() => onRequestNewProblem?.(), 3000);
       return;
     }
 
+    // All correct — animate then submit
+    setErrors([]);
+    setPhase('result');
     onStepCorrect?.();
-    const { simplified } = calculateCorrectAnswers();
-    onAnswerSubmit(`${simplified.numerator}/${simplified.denominator}`);
+
+    setTimeout(() => {
+      setResultNum(correctResult);
+      setTimeout(() => {
+        if (correctResult === 0)      onAnswerSubmit('0');
+        else if (simplifiedDen === 1) onAnswerSubmit(`${simplifiedNum}`);
+        else                          onAnswerSubmit(`${simplifiedNum}/${simplifiedDen}`);
+        setPhase('done');
+      }, 1200);
+    }, 1800);
   };
 
-  const { simplified: _simplified } = correctDen > 0 ? calculateCorrectAnswers() : { simplified: { denominator: 0 } };
-  const isWholeAnswer = _simplified.denominator === 1;
+  useImperativeHandle(ref, () => ({
+    submitCurrentStep: () => {
+      if      (phase === 'den')                                handleDenSubmit();
+      else if (phase === 'expr')                               handleExprSubmit();
+      else if (phase === 'answer')                             handleAnswerSubmit();
+      else if (phase === 'fraction' && lockedFracNum === null) handleFracNumSubmit();
+      else if (phase === 'fraction' && lockedFracNum !== null) handleFracDenSubmit();
+      else if (phase === 'ready')                              handleCastSpell();
+    }
+  }));
 
-  const inputStyle = {
-    width: '80px',
-    height: '50px',
-    fontSize: '24px',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    borderRadius: '10px',
-    border: '3px solid #888',
+  const handleKeyDown = (e, fn) => {
+    if (e.key === 'Enter') { e.preventDefault(); fn(); }
+  };
+
+  /* ── Styles ── */
+  const circleBase = {
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '2.5px solid #888',
     background: '#fff',
-    color: '#000'
+    position: 'absolute',
   };
+  const inputBase = {
+    border: 'none', background: 'transparent',
+    textAlign: 'center', outline: 'none', color: '#111',
+  };
+  const fracInputStyle = {
+    fontSize: 18, fontWeight: 700,
+    width: 60, textAlign: 'center',
+    border: '2px solid #8b5cf6',
+    borderRadius: 6,
+    padding: '4px 0',
+    outline: 'none',
+    color: '#111',
+    background: '#fff',
+  };
+
+  const isWrong       = phase === 'wrong';
+  const isSmallActive = phase === 'den';
+  const isBigActive   = phase === 'expr' || phase === 'answer';
+  const isReady       = phase === 'ready';
+  const isFraction    = phase === 'fraction';
+  const glowStyle     = { borderColor: '#8b5cf6', boxShadow: '0 0 10px rgba(139,92,246,0.4)' };
+  const wrongStyle    = { borderColor: '#dc2626', boxShadow: '0 0 10px rgba(220,38,38,0.35)' };
 
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: '20px',
-      padding: '20px'
+      width: '100%', height: '100%',
+      display: 'flex', flexDirection: 'column',
+      justifyContent: 'center', alignItems: 'center',
+      gap: '12px', padding: '16px', userSelect: 'none',
     }}>
-      {step === 1 ? (
-        <form ref={form1Ref} onSubmit={handleDenominatorSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: '#333', fontSize: '20px', fontWeight: 'bold' }}>Step 1: Enter the common denominator</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+      {/* Hint */}
+      <div style={{ fontSize: '13px', color: '#555', minHeight: 18, textAlign: 'center' }}>
+        {phase === 'den'    && 'Enter the denominator of the problem.'}
+        {phase === 'expr'   && 'Enter the expression of the problem.'}
+        {phase === 'answer' && 'Enter the answer of your expression.'}
+        {isFraction && !isWholeAnswer && lockedFracNum === null && 'Enter the numerator of the result.'}
+        {isFraction && !isWholeAnswer && lockedFracNum !== null && 'Enter the denominator of the result.'}
+        {isFraction && isWholeAnswer  && 'Enter the whole number result.'}
+        {phase === 'ready'  && 'All set! Press Cast Spell to fire!'}
+        {phase === 'result' && 'Checking..'}
+        {phase === 'done'   && 'Hit!'}
+        {phase === 'wrong'  && 'Check what went wrong — next problem coming up…'}
+      </div>
+
+      {/* Pattern */}
+      <div style={{ position: 'relative', width: 200, height: 200 }}>
+
+        {/* Connector */}
+        <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+             viewBox="0 0 200 200">
+          <line x1="86" y1="86" x2="168" y2="168"
+                stroke="#bbb" strokeWidth="2" strokeDasharray="5 4" strokeLinecap="round" />
+        </svg>
+
+        {/* Big circle */}
+        <div
+          onClick={() => {
+            if (phase === 'expr')   exprInputRef.current?.focus();
+            if (phase === 'answer') answerInputRef.current?.focus();
+          }}
+          style={{
+            ...circleBase,
+            top: 8, left: 8, width: 148, height: 148,
+            flexDirection: 'column', gap: 4,
+            opacity: lockedDen === null ? 0.45 : 1,
+            cursor: isBigActive ? 'text' : 'default',
+            ...(isBigActive               ? { borderColor: '#8b5cf6', borderWidth: 3 } : {}),
+            ...(isReady                   ? glowStyle : {}),
+            ...(isWrong                   ? wrongStyle : {}),
+            zIndex: 2,
+          }}
+        >
+          {phase === 'den' && (
+            <span style={{ fontSize: 13, color: '#aaa' }}>numerator</span>
+          )}
+
+          {phase === 'expr' && (
             <input
-              type="number"
-              value={denominator}
-              onChange={(e) => setDenominator(e.target.value)}
-              placeholder="Denominator"
-              autoFocus
-              style={inputStyle}
+              ref={exprInputRef}
+              type="text"
+              value={exprValue}
+              onChange={e => setExprValue(e.target.value)}
+              onKeyDown={e => handleKeyDown(e, handleExprSubmit)}
+              placeholder={`? ${operator} ?`}
+              style={{ ...inputBase, fontSize: 20, fontWeight: 600, width: '80%' }}
             />
-            <button type="submit" style={{ display: 'none' }} />
-            {stepStatus[0] && (
-              <span style={{ fontSize: '32px', color: stepStatus[0] === 'correct' ? '#10b981' : '#ef4444' }}>
-                {stepStatus[0] === 'correct' ? '✓' : '✗'}
-              </span>
-            )}
-          </div>
-        </form>
-      ) : step === 2 ? (
-        <form ref={form2Ref} onSubmit={handleResultNumeratorSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: '#333', fontSize: '20px', fontWeight: 'bold' }}>Step 2: Add/Subtract the numerators</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
-              {correctNum1} {operator} {correctNum2} =
-            </span>
-            <input
-              type="number"
-              value={resultNumerator}
-              onChange={(e) => setResultNumerator(e.target.value)}
-              placeholder="Result"
-              autoFocus
-              style={inputStyle}
-            />
-            <button type="submit" style={{ display: 'none' }} />
-            {stepStatus[1] && (
-              <span style={{ fontSize: '32px', color: stepStatus[1] === 'correct' ? '#10b981' : '#ef4444' }}>
-                {stepStatus[1] === 'correct' ? '✓' : '✗'}
-              </span>
-            )}
-          </div>
-        </form>
-      ) : step === 3 ? (
-        <form ref={form3Ref} onSubmit={handleFinalAnswerSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: '#333', fontSize: '20px', fontWeight: 'bold' }}>
-            {isWholeAnswer ? 'Step 3: Enter the whole number answer' : 'Step 3: Enter the final answer'}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {isWholeAnswer ? (
+          )}
+
+          {phase === 'answer' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 16, fontWeight: 600, color: '#444' }}>{lockedExpr} =</span>
               <input
+                ref={answerInputRef}
                 type="number"
-                value={resultNumerator}
-                onChange={(e) => setResultNumerator(e.target.value)}
-                placeholder="Whole #"
-                autoFocus
-                style={inputStyle}
+                value={answerValue}
+                onChange={e => setAnswerValue(e.target.value)}
+                onKeyDown={e => handleKeyDown(e, handleAnswerSubmit)}
+                placeholder="?"
+                style={{ ...inputBase, fontSize: 22, fontWeight: 700, width: '50%' }}
+              />
+            </div>
+          )}
+
+          {(isFraction || isReady) && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: '#555' }}>{lockedExpr} = {lockedAns}</span>
+            </div>
+          )}
+
+          {phase === 'wrong' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#dc2626' }}>{lockedExpr} = {lockedAns}</span>
+            </div>
+          )}
+
+          {(phase === 'result' || phase === 'done') && (
+            resultNum !== null ? (
+              <span style={{ fontSize: 30, fontWeight: 700, color: '#8b5cf6', animation: 'pop .4s ease' }}>
+                {resultNum}
+              </span>
+            ) : (
+              <span style={{ fontSize: 16, color: '#888' }}>{lockedExpr} = {correctResult}</span>
+            )
+          )}
+        </div>
+
+        {/* Small circle */}
+        <div
+          onClick={() => { if (phase === 'den') denInputRef.current?.focus(); }}
+          style={{
+            ...circleBase,
+            bottom: 4, right: 4, width: 64, height: 64,
+            cursor: phase === 'den' ? 'text' : 'default',
+            ...(isSmallActive ? { borderColor: '#8b5cf6', borderWidth: 2.5 } : {}),
+            ...(isReady       ? glowStyle : {}),
+            ...(isWrong       ? wrongStyle : {}),
+            zIndex: 2,
+          }}
+        >
+          {lockedDen === null ? (
+            <input
+              ref={denInputRef}
+              type="number"
+              value={denValue}
+              onChange={e => setDenValue(e.target.value)}
+              onKeyDown={e => handleKeyDown(e, handleDenSubmit)}
+              placeholder="?"
+              style={{ ...inputBase, fontSize: 16, fontWeight: 600, width: '90%' }}
+            />
+          ) : (
+            <span style={{
+              fontSize: 18, fontWeight: 700,
+              color: isWrong ? '#dc2626' : '#111',
+            }}>{lockedDen}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Final answer — fraction or whole number */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minHeight: 64 }}>
+        {isWholeAnswer ? (
+          isFraction ? (
+            <input
+              ref={fracNumRef}
+              type="number"
+              value={fracNumValue}
+              onChange={e => setFracNumValue(e.target.value)}
+              onKeyDown={e => handleKeyDown(e, handleFracNumSubmit)}
+              placeholder="?"
+              style={{ ...fracInputStyle, fontSize: 22 }}
+            />
+          ) : (
+            <span style={{ fontSize: 22, fontWeight: 700, color: isWrong ? '#dc2626' : '#333' }}>
+              {lockedFracNum ?? '?'}
+            </span>
+          )
+        ) : (
+          <>
+            {/* Numerator */}
+            {isFraction && lockedFracNum === null ? (
+              <input
+                ref={fracNumRef}
+                type="number"
+                value={fracNumValue}
+                onChange={e => setFracNumValue(e.target.value)}
+                onKeyDown={e => handleKeyDown(e, handleFracNumSubmit)}
+                placeholder="?"
+                style={fracInputStyle}
               />
             ) : (
-              <>
-                <input
-                  type="number"
-                  value={resultNumerator}
-                  onChange={(e) => setResultNumerator(e.target.value)}
-                  placeholder="Numerator"
-                  autoFocus
-                  style={inputStyle}
-                />
-                <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#333' }}>/</span>
-                <input
-                  type="number"
-                  value={resultDenominator}
-                  onChange={(e) => setResultDenominator(e.target.value)}
-                  placeholder="Denominator"
-                  style={inputStyle}
-                />
-              </>
-            )}
-            <button type="submit" style={{ display: 'none' }} />
-            {stepStatus[2] && (
-              <span style={{ fontSize: '32px', color: stepStatus[2] === 'correct' ? '#10b981' : '#ef4444' }}>
-                {stepStatus[2] === 'correct' ? '✓' : '✗'}
+              <span style={{ fontSize: 18, fontWeight: 700, color: isWrong ? '#dc2626' : '#333' }}>
+                {lockedFracNum ?? '?'}
               </span>
             )}
-          </div>
-        </form>
-      ) : (
-        <form ref={form4Ref} onSubmit={handleMixedNumberSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: '#333', fontSize: '20px', fontWeight: 'bold' }}>Step 4: Convert to a mixed number</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input
-              type="number"
-              value={mixedWhole}
-              onChange={(e) => setMixedWhole(e.target.value)}
-              placeholder="Whole"
-              autoFocus
-              style={inputStyle}
-            />
-            {step4Remainder > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <input
-                  type="number"
-                  value={mixedNumerator}
-                  onChange={(e) => setMixedNumerator(e.target.value)}
-                  placeholder="Num"
-                  style={{ ...inputStyle, width: '60px' }}
-                />
-                <div style={{ width: '60px', height: '3px', background: '#888', margin: '2px 0' }} />
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>{correctDen}</div>
-              </div>
-            )}
-            <button type="submit" style={{ display: 'none' }} />
-            {stepStatus[3] && (
-              <span style={{ fontSize: '32px', color: stepStatus[3] === 'correct' ? '#10b981' : '#ef4444' }}>
-                {stepStatus[3] === 'correct' ? '✓' : '✗'}
+
+            {/* Fraction bar */}
+            <div style={{ width: 100, height: 2, background: '#888' }} />
+
+            {/* Denominator */}
+            {isFraction && lockedFracNum !== null ? (
+              <input
+                ref={fracDenRef}
+                type="number"
+                value={fracDenValue}
+                onChange={e => setFracDenValue(e.target.value)}
+                onKeyDown={e => handleKeyDown(e, handleFracDenSubmit)}
+                placeholder="?"
+                style={fracInputStyle}
+              />
+            ) : (
+              <span style={{ fontSize: 18, fontWeight: 600, color: isWrong ? '#dc2626' : '#333' }}>
+                {lockedFracDen ?? '?'}
               </span>
             )}
-          </div>
-        </form>
+          </>
+        )}
+      </div>
+
+      {/* Error list */}
+      {errors.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 280, width: '100%' }}>
+          {errors.map((err, i) => (
+            <div key={i} style={{
+              fontSize: 12,
+              color: '#991b1b',
+              background: '#fef2f2',
+              border: '1px solid #fca5a5',
+              borderRadius: 8,
+              padding: '6px 10px',
+            }}>
+              {err}
+            </div>
+          ))}
+        </div>
       )}
+
+      <style>{`
+        @keyframes pop {
+          from { transform: scale(0.5); opacity: 0; }
+          to   { transform: scale(1);   opacity: 1; }
+        }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type=number] { -moz-appearance: textfield; }
+      `}</style>
     </div>
   );
 });
 
 FractionPattern.displayName = 'FractionPattern';
-
 export default FractionPattern;
