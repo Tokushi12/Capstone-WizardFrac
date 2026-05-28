@@ -1,112 +1,251 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './IslandInterior.css';
 
-const IslandInterior = ({ island, maxStage = 0, onSelectLevel, onBack }) => {
-  // Start on the first uncompleted level (or boss if all done)
-  const defaultLevel = Math.min(maxStage + 1, 6);
-  const [selectedLevel, setSelectedLevel] = useState(defaultLevel);
+const SQUARE  = 380;
+const P_RAD   = 18;
+const E_RAD   = 22;
+const SPEED   = 3;
+const REACH   = P_RAD + E_RAD + 12;
 
-  // Level N is unlocked if the previous level has been completed
-  const isUnlocked = (level) => true;
+const walkableSrc = (name) => {
+  switch (name) {
+    case 'Similar':    return '/SimilarWalkableArea.png';
+    case 'Dissimilar': return '/DissimilarWalkableArea.png';
+    case 'Hybrid':     return '/HybridWalkableArea.png';
+    default:           return null;
+  }
+};
+
+const makeEnemies = () => {
+  const margin = E_RAD + 16;
+  const range  = SQUARE - margin * 2;
+  const positions = [];
+  for (let level = 1; level <= 6; level++) {
+    let pos, tries = 0;
+    do {
+      pos = { x: margin + Math.random() * range, y: margin + Math.random() * range };
+      tries++;
+    } while (
+      tries < 200 &&
+      positions.some(p => Math.hypot(p.x - pos.x, p.y - pos.y) < E_RAD * 3.2)
+    );
+    positions.push({ level, ...pos });
+  }
+  return positions;
+};
+
+const IslandInterior = ({ island, maxStage = 0, onSelectLevel, onBack }) => {
   const isCompleted = (level) => maxStage >= level;
 
-  const getIslandBackground = () => {
-    switch (island.name) {
-      case 'Similar':
-        return { backgroundImage: 'url(/SimilarWalkableArea.png)' };
-      case 'Dissimilar':
-        return { backgroundImage: 'url(/DisilimarBackground.jpg)' };
-      case 'Hybrid':
-        return { backgroundImage: 'url(/HybridBackground.jpg)' };
-      default:
-        return { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' };
-    }
-  };
+  const [playerPos,  setPlayerPos]  = useState({ x: SQUARE / 2, y: SQUARE / 2 });
+  const [nearEnemy,  setNearEnemy]  = useState(null);
+  const [enemies]                   = useState(makeEnemies);
 
-  const getLevelLabel = (level) => {
-    if (level === 6) return 'Boss';
-    return `Level ${level}`;
-  };
+  const posRef   = useRef({ x: SQUARE / 2, y: SQUARE / 2 });
+  const keysRef  = useRef({});
+  const frameRef = useRef(null);
 
-  const getLevelStyle = (level) => {
-    const base = {
-      position: 'relative',
-      padding: '12px 20px',
-      fontSize: '15px',
-      fontWeight: 'bold',
-      borderRadius: '10px',
-      cursor: isUnlocked(level) ? 'pointer' : 'not-allowed',
-      border: '2px solid transparent',
-      transition: 'all 0.2s',
-      minWidth: '110px',
+  // ── movement loop ──
+  useEffect(() => {
+    const tick = () => {
+      const k = keysRef.current;
+      let { x, y } = posRef.current;
+
+      if (k['ArrowUp']    || k['w'] || k['W']) y -= SPEED;
+      if (k['ArrowDown']  || k['s'] || k['S']) y += SPEED;
+      if (k['ArrowLeft']  || k['a'] || k['A']) x -= SPEED;
+      if (k['ArrowRight'] || k['d'] || k['D']) x += SPEED;
+
+      x = Math.max(P_RAD, Math.min(SQUARE - P_RAD, x));
+      y = Math.max(P_RAD, Math.min(SQUARE - P_RAD, y));
+
+      posRef.current = { x, y };
+      setPlayerPos({ x, y });
+      frameRef.current = requestAnimationFrame(tick);
     };
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
 
-    if (!isUnlocked(level)) {
-      return { ...base, background: '#374151', color: '#6b7280', border: '2px solid #4b5563' };
-    }
-    if (selectedLevel === level) {
-      return { ...base, background: level === 6 ? '#7c3aed' : '#3b82f6', color: '#fff', border: '2px solid #fff', boxShadow: '0 0 12px rgba(255,255,255,0.4)' };
-    }
-    if (isCompleted(level)) {
-      return { ...base, background: '#065f46', color: '#6ee7b7', border: '2px solid #10b981' };
-    }
-    return { ...base, background: '#1e3a5f', color: '#93c5fd', border: '2px solid #3b82f6' };
+  // ── nearby enemy detection ──
+  useEffect(() => {
+    const { x, y } = playerPos;
+    const closest = enemies.reduce((best, e) => {
+      const d = Math.hypot(e.x - x, e.y - y);
+      return d < REACH && (best === null || d < best.d) ? { e, d } : best;
+    }, null);
+    setNearEnemy(closest?.e ?? null);
+  }, [playerPos, enemies]);
+
+  // ── keyboard events ──
+  useEffect(() => {
+    const down = (e) => {
+      keysRef.current[e.key] = true;
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+      if (e.key === 'Enter' && nearEnemy) onSelectLevel(nearEnemy.level);
+    };
+    const up = (e) => { keysRef.current[e.key] = false; };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup',   up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup',   up);
+    };
+  }, [nearEnemy, onSelectLevel]);
+
+  const enemyColor = (level, done) => {
+    if (done)        return '#10b981';
+    if (level === 6) return '#7c3aed';
+    return '#3b82f6';
   };
+
+  const overlay = walkableSrc(island.name);
 
   return (
-    <div className="island-interior" style={getIslandBackground()}>
-      <div className="interior-overlay">
-        <div className="interior-header">
-          <button className="back-btn" onClick={onBack}>← Back</button>
-          <h1>{island.title}</h1>
-        </div>
+    <div style={{
+      position: 'relative',
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
+      backgroundImage: 'url(/WalkableAreaBackground.jpg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }}>
 
-        <div className="interior-content">
-          <div className="island-description">
-            <h3>Welcome to {island.title}!</h3>
-            <p>{island.description}</p>
-            <p><strong>Mechanic:</strong> {island.mechanic}</p>
-          </div>
+      {/* WalkableArea island PNG in front of background */}
+      {overlay && (
+        <img
+          src={overlay}
+          alt="island"
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            zIndex: 1,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
-          <div className="level-selector">
-            <h3>Select Level</h3>
-            <div className="level-buttons">
-              {[1, 2, 3, 4, 5, 6].map(level => (
-                <button
-                  key={level}
-                  style={getLevelStyle(level)}
-                  disabled={!isUnlocked(level)}
-                  onClick={() => isUnlocked(level) && setSelectedLevel(level)}
-                >
-                  {/* Status icon */}
-                  {!isUnlocked(level) && <span style={{ marginRight: 6 }}>🔒</span>}
-                  {isCompleted(level) && <span style={{ marginRight: 6 }}>✓</span>}
-                  {level === 6 && isUnlocked(level) && !isCompleted(level) && <span style={{ marginRight: 6 }}>👑</span>}
+      {/* Back button */}
+      <button
+        onClick={onBack}
+        style={{
+          position: 'absolute', top: 16, left: 16, zIndex: 10,
+          padding: '10px 20px',
+          background: 'rgba(0,0,0,0.6)', color: '#fff',
+          border: '2px solid rgba(255,255,255,0.5)', borderRadius: 10,
+          fontSize: 15, fontWeight: 700, cursor: 'pointer',
+        }}
+      >
+        ← Back
+      </button>
 
-                  {getLevelLabel(level)}
-                </button>
-              ))}
+      {/* Island title */}
+      <div style={{
+        position: 'absolute', top: 16, left: '50%',
+        transform: 'translateX(-50%)', zIndex: 10,
+        color: '#fff', fontSize: 22, fontWeight: 800,
+        textShadow: '2px 2px 6px #000', pointerEvents: 'none',
+      }}>
+        {island.title}
+      </div>
+
+      {/* Controls hint */}
+      <div style={{
+        position: 'absolute', bottom: 16, left: '50%',
+        transform: 'translateX(-50%)', zIndex: 10,
+        color: 'rgba(255,255,255,0.75)', fontSize: 13,
+        textShadow: '1px 1px 3px #000', pointerEvents: 'none',
+        whiteSpace: 'nowrap',
+      }}>
+        WASD / Arrow keys to move · Walk to an enemy and press Enter or click to fight
+      </div>
+
+      {/* Walkable square */}
+      <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: SQUARE, height: SQUARE,
+        zIndex: 2,
+      }}>
+
+        {/* Enemies */}
+        {enemies.map(enemy => {
+          const done  = isCompleted(enemy.level);
+          const boss  = enemy.level === 6;
+          const near  = nearEnemy?.level === enemy.level;
+          const color = enemyColor(enemy.level, done);
+
+          return (
+            <div
+              key={enemy.level}
+              onClick={() => onSelectLevel(enemy.level)}
+              style={{
+                position: 'absolute',
+                left: enemy.x - E_RAD,
+                top:  enemy.y - E_RAD,
+                width: E_RAD * 2, height: E_RAD * 2,
+                borderRadius: '50%',
+                background: color,
+                border: `3px solid ${near ? '#fff' : 'rgba(255,255,255,0.35)'}`,
+                boxShadow: near ? `0 0 16px ${color}, 0 0 32px ${color}` : '0 2px 8px rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 800, color: '#fff',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s, border-color 0.15s',
+                userSelect: 'none',
+              }}
+            >
+              {boss && (
+                <span style={{
+                  position: 'absolute', top: -24,
+                  fontSize: 20,
+                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))',
+                }}>
+                  👑
+                </span>
+              )}
+              {done ? '✓' : boss ? '!' : enemy.level}
             </div>
+          );
+        })}
 
-            {/* Progress info */}
-            <p style={{ color: '#cbd5e1', fontSize: '13px', marginTop: '10px' }}>
-              {maxStage === 0
-                ? 'Complete Level 1 to unlock the next level.'
-                : maxStage >= 6
-                ? 'All levels completed!'
-                : `${maxStage} / 6 levels completed — Level ${maxStage + 1} is next.`}
-            </p>
+        {/* Player */}
+        <div style={{
+          position: 'absolute',
+          left: playerPos.x - P_RAD,
+          top:  playerPos.y - P_RAD,
+          width: P_RAD * 2, height: P_RAD * 2,
+          borderRadius: '50%',
+          background: '#f59e0b',
+          border: '3px solid #fff',
+          boxShadow: '0 0 14px rgba(245,158,11,0.9)',
+          zIndex: 3,
+          pointerEvents: 'none',
+        }} />
+
+        {/* Interact prompt above nearby enemy */}
+        {nearEnemy && (
+          <div style={{
+            position: 'absolute',
+            left: nearEnemy.x - 64,
+            top:  nearEnemy.y - E_RAD - 48,
+            width: 128,
+            background: 'rgba(0,0,0,0.8)',
+            color: '#fff',
+            fontSize: 11, fontWeight: 700,
+            textAlign: 'center',
+            borderRadius: 6, padding: '4px 8px',
+            pointerEvents: 'none',
+            zIndex: 4,
+          }}>
+            {nearEnemy.level === 6 ? '👑 Boss Fight' : `Level ${nearEnemy.level}`}
+            <br />
+            <span style={{ color: '#fbbf24' }}>Enter / Click</span>
           </div>
-
-          <button
-            className="start-level-btn"
-            disabled={!isUnlocked(selectedLevel)}
-            onClick={() => onSelectLevel(selectedLevel)}
-            style={{ opacity: isUnlocked(selectedLevel) ? 1 : 0.5, cursor: isUnlocked(selectedLevel) ? 'pointer' : 'not-allowed' }}
-          >
-            {selectedLevel === 6 ? '⚔️ Fight the Boss' : `▶ Start Level ${selectedLevel}`}
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

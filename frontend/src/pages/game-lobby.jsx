@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './game-lobby.css';
 import IslandInterior from './IslandInterior';
 
-const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard }) => {
+const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard, onEnterIslandInterior, onLeaveIslandInterior }) => {
   const [gameProgress, setGameProgress] = useState(null);
   const [selectedIsland, setSelectedIsland] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -15,43 +15,26 @@ const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard 
     setCharacter(selectedCharacter);
   }, [selectedCharacter]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadGameProgress = async () => {
-      try {
-        const res = await fetch(`http://localhost:8080/api/game-progress/${studentId}`);
-        if (!isMounted) return;
-
-        if (res.status === 404) {
-          setGameProgress({
-            similarIslandMaxStage: 0,
-            dissimilarIslandUnlocked: false,
-            hybridIslandUnlocked: false,
-          });
-        } else {
-          const data = await res.json();
-          setGameProgress(data);
-        }
-      } catch (err) {
-        console.error('Error fetching progress:', err);
-        setGameProgress({
-          similarIslandMaxStage: 0,
-          dissimilarIslandUnlocked: false,
-          hybridIslandUnlocked: false,
-        });
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const loadGameProgress = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8080/api/game-progress/${studentId}`);
+      if (res.status === 404) {
+        setGameProgress({ similarIslandMaxStage: 0, dissimilarIslandUnlocked: false, hybridIslandUnlocked: false });
+      } else {
+        const data = await res.json();
+        setGameProgress(data);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+      setGameProgress({ similarIslandMaxStage: 0, dissimilarIslandUnlocked: false, hybridIslandUnlocked: false });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadGameProgress();
-
-    return () => {
-      isMounted = false;
-    };
   }, [studentId]);
 
   useEffect(() => {
@@ -83,6 +66,7 @@ const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard 
 
   const handleEnterIsland = (island) => {
     if (island.unlocked) {
+      onEnterIslandInterior?.();
       setSelectedIsland(island);
       setShowInterior(true);
       setSelectedLevel(1);
@@ -93,6 +77,8 @@ const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard 
     setShowInterior(false);
     setSelectedIsland(null);
     setSelectedLevel(1);
+    loadGameProgress();
+    onLeaveIslandInterior?.();
   };
 
   const handleSelectLevel = async (level) => {
@@ -162,10 +148,18 @@ const GameLobby = ({ studentId, selectedCharacter, onGameStart, onOpenDashboard 
   ];
 
   if (showInterior && selectedIsland) {
+    const liveMaxStage = (() => {
+      switch (selectedIsland.name) {
+        case 'Similar':    return gameProgress?.similarIslandMaxStage    || 0;
+        case 'Dissimilar': return gameProgress?.dissimilarIslandMaxStage || 0;
+        case 'Hybrid':     return gameProgress?.hybridIslandMaxStage     || 0;
+        default:           return 0;
+      }
+    })();
     return (
       <IslandInterior
         island={selectedIsland}
-        maxStage={selectedIsland.maxStage}
+        maxStage={liveMaxStage}
         onSelectLevel={handleSelectLevel}
         onBack={handleBackToLobby}
       />

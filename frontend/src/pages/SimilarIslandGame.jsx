@@ -20,6 +20,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enemyAttacking, setEnemyAttacking] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const [currentHint, setCurrentHint] = useState('');
   const [circleDetected, setCircleDetected] = useState(false);
   const [bossPosition, setBossPosition] = useState({ x: 0, y: 0 });
@@ -268,11 +269,12 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     onGameEnd({ status, isWon, score });
   };
 
-  const handleExitGame = async () => {
-    if (window.confirm('Are you sure you want to exit? Progress will be saved.')) {
-      await saveGameEnd('PAUSED', false);
-      onExitToLobby();
-    }
+  const handleExitGame = () => setShowExitModal(true);
+
+  const confirmExit = async () => {
+    setShowExitModal(false);
+    await saveGameEnd('PAUSED', false);
+    onExitToLobby();
   };
 
   const problemMatch = currentProblem.match(/(\d+)\/(\d+)\s*([+-])\s*(\d+)\/(\d+)/);
@@ -673,6 +675,49 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             >
               Return to Island Selection
             </button>
+          </div>
+        </div>
+      )}
+
+      {showExitModal && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.75)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '48px 56px',
+            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
+          }}>
+            <div style={{ fontSize: '48px' }}>⚠️</div>
+            <h2 style={{ margin: 0, fontSize: '28px', color: '#1f2937' }}>Exit Game?</h2>
+            <p style={{ margin: 0, fontSize: '16px', color: '#555' }}>
+              Your progress will be saved.
+            </p>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+              <button
+                style={{
+                  padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
+                  background: '#8b5cf6', color: '#fff',
+                  border: 'none', borderRadius: '10px', cursor: 'pointer',
+                }}
+                onClick={confirmExit}
+              >
+                Yes, Exit
+              </button>
+              <button
+                style={{
+                  padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
+                  background: '#e5e7eb', color: '#374151',
+                  border: 'none', borderRadius: '10px', cursor: 'pointer',
+                }}
+                onClick={() => setShowExitModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

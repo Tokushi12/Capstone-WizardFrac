@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import LandingPage from './pages/login';
 import CharacterSelection from './pages/character-selection';
@@ -16,6 +16,41 @@ function App() {
   const [gameSession, setGameSession] = useState(null);
   const [gameResult, setGameResult] = useState(null);
   const [lobbyKey, setLobbyKey] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef(null);
+
+  // Create the audio instance once
+  useEffect(() => {
+    const audio = new Audio('/TitleTheme.wav');
+    audio.loop = true;
+    audio.volume = 0.5;
+    audioRef.current = audio;
+    return () => { audio.pause(); audio.src = ''; };
+  }, []);
+
+  // Play on login/lobby screens, pause otherwise
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const lobbyScreens = ['login', 'character-selection', 'game-lobby'];
+    if (lobbyScreens.includes(currentScreen)) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [currentScreen]);
+
+  const pauseMusic  = () => audioRef.current?.pause();
+  const resumeMusic = () => { if (!isMuted) audioRef.current?.play().catch(() => {}); };
+
+  const toggleMute = () => {
+    if (!audioRef.current) return;
+    if (isMuted) {
+      audioRef.current.volume = 0.5;
+    } else {
+      audioRef.current.volume = 0;
+    }
+    setIsMuted(m => !m);
+  };
 
   // Handle login completion
   const handleLogin = (student) => {
@@ -172,6 +207,8 @@ function App() {
           selectedCharacter={selectedCharacter}
           onGameStart={handleGameStart}
           onOpenDashboard={handleOpenDashboard}
+          onEnterIslandInterior={pauseMusic}
+          onLeaveIslandInterior={resumeMusic}
         />
       )}
       
@@ -241,6 +278,35 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Floating mute button */}
+      <button
+        onClick={toggleMute}
+        title={isMuted ? 'Unmute music' : 'Mute music'}
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          zIndex: 9999,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.55)',
+          border: '2px solid rgba(255,255,255,0.3)',
+          color: '#fff',
+          fontSize: 20,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)',
+          transition: 'background 0.2s, transform 0.15s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.8)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.55)'}
+      >
+        {isMuted ? '🔇' : '🔊'}
+      </button>
     </div>
   );
 }
