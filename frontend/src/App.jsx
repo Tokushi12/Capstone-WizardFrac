@@ -189,7 +189,6 @@ function App() {
           <div className="game-end-container">
             {gameResult.isWon ? (
               <>
-                <div className="end-emoji">🎉</div>
                 <h1>VICTORY!</h1>
                 <p>You defeated the enemy!</p>
                 
