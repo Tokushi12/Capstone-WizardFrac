@@ -16,7 +16,7 @@
 }
 
 .game-container.hybrid-island {
-  background: url('/HybridBackground.jpg') center/cover no-repeat;
+  background: url('/HybridWalkableArea.png') center/cover no-repeat;
 }
 
 .game-header {
