@@ -18,6 +18,7 @@ function App() {
   const [lobbyKey, setLobbyKey] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef(null);
+  const endActionLocked = useRef(false);
 
   // Create the audio instance once
   useEffect(() => {
@@ -101,6 +102,7 @@ function App() {
 
   // Handle return to lobby
   const handleReturnToLobby = () => {
+    endActionLocked.current = false;
     setGameSession(null);
     setGameResult(null);
     setLobbyKey(k => k + 1);
@@ -289,7 +291,7 @@ function App() {
           {/* Buttons */}
           <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', marginTop: '16px' }}>
             {gameResult.isWon && gameSession?.level < 6 && (
-              <button onClick={handleNextLevel} style={{
+              <button onClick={() => { if (endActionLocked.current) return; endActionLocked.current = true; handleNextLevel(); }} style={{
                 padding: '12px 28px', fontSize: '15px', fontWeight: 700,
                 background: 'rgba(40,40,40,0.8)', color: '#fff',
                 border: '1px solid rgba(255,255,255,0.3)', borderRadius: '10px',
@@ -298,7 +300,7 @@ function App() {
                 ▶ Next Level
               </button>
             )}
-            <button onClick={handleReturnToLobby} style={{
+            <button onClick={() => { if (endActionLocked.current) return; endActionLocked.current = true; handleReturnToLobby(); }} style={{
               padding: '12px 28px', fontSize: '15px', fontWeight: 700,
               background: 'rgba(40,40,40,0.8)', color: '#fff',
               border: '1px solid rgba(255,255,255,0.3)', borderRadius: '10px',
@@ -306,7 +308,7 @@ function App() {
             }}>
               Back to Lobby
             </button>
-            <button onClick={handleReturnToLogin} style={{
+            <button onClick={() => { if (endActionLocked.current) return; endActionLocked.current = true; handleReturnToLogin(); }} style={{
               padding: '12px 28px', fontSize: '15px', fontWeight: 700,
               background: 'rgba(40,40,40,0.8)', color: '#fff',
               border: '1px solid rgba(255,255,255,0.3)', borderRadius: '10px',

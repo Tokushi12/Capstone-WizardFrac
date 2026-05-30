@@ -5,6 +5,19 @@ import ButterflyTutorial from '../components/ButterflyTutorial';
 import MixedButterflyTutorial from '../components/MixedButterflyTutorial';
 import './game.css';
 
+const FractionBox = ({ whole, num, den }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    {whole > 0 && (
+      <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', textShadow: '1px 1px 4px #000' }}>{whole}</span>
+    )}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: 50, height: 36, border: '2px solid rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#fff', textShadow: '1px 1px 3px #000' }}>{num}</div>
+      <div style={{ width: 62, height: 3, background: '#fff', margin: '3px 0', borderRadius: 2 }} />
+      <div style={{ width: 50, height: 36, border: '2px solid rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#fff', textShadow: '1px 1px 3px #000' }}>{den}</div>
+    </div>
+  </div>
+);
+
 const DissimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, gameSession, onGameEnd, onExitToLobby }) => {
   const [playerHealth, setPlayerHealth] = useState(gameSession.lives);
   const [enemyLives, setEnemyLives] = useState(3);
@@ -227,8 +240,11 @@ const DissimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, g
       {/* Hearts + problem row */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(playerHealth, 3)}</div>
-        <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', textShadow: '1px 1px 4px #000' }}>
-          {problemDisplay}
+        <div key={`${problem.numerator1}-${problem.denominator1}-${problem.numerator2}-${problem.denominator2}`} className="problem-fade-in" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <FractionBox whole={problem.whole1} num={problem.numerator1} den={problem.denominator1} />
+          <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', textShadow: '1px 1px 4px #000' }}>{problem.operator}</span>
+          <FractionBox whole={problem.whole2} num={problem.numerator2} den={problem.denominator2} />
+          <span style={{ fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>= ?</span>
         </div>
         <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(enemyLives, 3)}</div>
       </div>

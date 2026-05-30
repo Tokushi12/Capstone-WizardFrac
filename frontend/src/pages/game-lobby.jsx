@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './game-lobby.css';
 import IslandInterior from './IslandInterior';
 
@@ -10,6 +10,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [character, setCharacter] = useState(selectedCharacter);
+  const actionLocked = useRef(false);
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
@@ -66,15 +67,16 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   }, [studentId, selectedCharacter]);
 
   const handleEnterIsland = (island) => {
-    if (island.unlocked) {
-      onEnterIslandInterior?.();
-      setSelectedIsland(island);
-      setShowInterior(true);
-      setSelectedLevel(1);
-    }
+    if (!island.unlocked || actionLocked.current) return;
+    actionLocked.current = true;
+    onEnterIslandInterior?.();
+    setSelectedIsland(island);
+    setShowInterior(true);
+    setSelectedLevel(1);
   };
 
   const handleBackToLobby = () => {
+    actionLocked.current = false;
     setShowInterior(false);
     setSelectedIsland(null);
     setSelectedLevel(1);
