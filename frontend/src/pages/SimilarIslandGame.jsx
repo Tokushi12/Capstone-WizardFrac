@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './game.css';
 import DrawingCanvas from '../components/DrawingCanvas';
 import FractionPattern from '../components/FractionPattern';
+import SimilarFractionTutorial from '../components/SimilarFractionTutorial';
 import '../components/components.css';
 
 const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, gameSession, onGameEnd, onExitToLobby }) => {
@@ -21,17 +22,142 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   const [enemyAttacking, setEnemyAttacking] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
   const [currentHint, setCurrentHint] = useState('');
   const [circleDetected, setCircleDetected] = useState(false);
+  const [magicN, setMagicN] = useState('');
+  const [checkPhase, setCheckPhase] = useState(false);
+  const [simplifiedInput, setSimplifiedInput] = useState('');
+  const [simplifiedDenInput, setSimplifiedDenInput] = useState('');
+  const [hintUsed, setHintUsed] = useState(false);
+  const [phase2HintUsed, setPhase2HintUsed] = useState(false);
+  const [interactableVisible, setInteractableVisible] = useState(true);
+  const [formulaVisible, setFormulaVisible] = useState(false);
+  const [showHintConfirm, setShowHintConfirm] = useState(false);
+  const [denAnimating, setDenAnimating] = useState(false);
+  const [denVisible, setDenVisible] = useState(false);
+  const [nVisible, setNVisible] = useState(false);
+  const [showDenSparkle, setShowDenSparkle] = useState(false);
+  const [appearSparkles, setAppearSparkles] = useState([]);
+  const [bubbles, setBubbles] = useState(null);
+  const bubble1Ref = useRef(null);
+  const rectWrapperRef = useRef(null);
+  const rectScaleRef  = useRef(1);
+  const [rectScale, setRectScale] = useState(1);
+
+  useEffect(() => {
+    if (!rectWrapperRef.current) return;
+    const obs = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      const s = Math.min(1, width / 400, height / 440);
+      rectScaleRef.current = s;
+      setRectScale(s);
+    });
+    obs.observe(rectWrapperRef.current);
+    return () => obs.disconnect();
+  }, []);
+  const playerRef    = useRef(null);
+  const enemyRef     = useRef(null);
+  const playerBoxRef = useRef(null);
+  const enemyBoxRef  = useRef(null);
+  const fireballRef = useRef(null);
+  const fireballAnimRef = useRef(null);
+  const [fireball, setFireball] = useState(null);
+  const [dBubble, setDBubble] = useState(null);
+  const dBubbleRef     = useRef(null);
+  const dBubbleAnimRef = useRef(null);
+  const [finalAnswerVisible, setFinalAnswerVisible] = useState(false);
+  const [checkButtonReady, setCheckButtonReady] = useState(false);
+  const [showNSparkle, setShowNSparkle] = useState(false);
+  const [enemyFlashing, setEnemyFlashing] = useState(false);
+  const bubble2Ref = useRef(null);
+  const arcAnimRef  = useRef(null);
+  const actionLocked = useRef(false);
   const [bossPosition, setBossPosition] = useState({ x: 0, y: 0 });
   const enemySectionRef = useRef(null);
   const animationFrameRef = useRef(null);
   const directionRef = useRef({ x: 1, y: 1 });
   const speedRef = useRef(2);
   const fractionPatternRef = useRef(null);
+  const den1Ref = useRef(null);
+  const den2Ref = useRef(null);
+  const circleContainerRef = useRef(null);
 
   const handleCircleDetected = () => {
+    new Audio('/SoundEffects/circleAppear.wav').play().catch(() => {});
+    const SIZE = 48;
+    if (den1Ref.current && den2Ref.current && circleContainerRef.current) {
+      const r1    = den1Ref.current.getBoundingClientRect();
+      const r2    = den2Ref.current.getBoundingClientRect();
+      const cRect = circleContainerRef.current.getBoundingClientRect();
+
+      const s1 = { left: r1.left + r1.width / 2 - SIZE / 2, top: r1.top + r1.height / 2 - SIZE / 2 };
+      const s2 = { left: r2.left + r2.width / 2 - SIZE / 2, top: r2.top + r2.height / 2 - SIZE / 2 };
+      const dLeft = cRect.left + cRect.width * 0.5 - SIZE / 2;
+      const dTop  = cRect.top  + 255 * rectScaleRef.current - SIZE / 2;
+
+      // Random Bezier control points — random arc direction, always land at D
+      const rndCtrl = (sx, sy) => ({
+        x: (sx + dLeft) / 2 + (Math.random() - 0.5) * 400,
+        y: (sy + dTop)  / 2 - 80 - Math.random() * 200,
+      });
+      const ctrl1 = rndCtrl(s1.left, s1.top);
+      const ctrl2 = rndCtrl(s2.left, s2.top);
+
+      // Show invisible bubbles at start positions
+      setBubbles({ b1: { ...s1, opacity: 0 }, b2: { ...s2, opacity: 0 } });
+
+      // Appear at 0.5 s — burst sparkles + sound
+      setTimeout(() => {
+        setBubbles({ b1: { ...s1, opacity: 1 }, b2: { ...s2, opacity: 1 } });
+        new Audio('/SoundEffects/sparkleSound.wav').play().catch(() => {});
+      }, 500);
+
+      // Arc animation begins after 2 s
+      setTimeout(() => {
+        new Audio('/SoundEffects/numberMove.wav').play().catch(() => {});
+        const duration = 900;
+        const start = performance.now();
+        const bezier = (t, p0, cp, p1) => (1-t)**2 * p0 + 2*(1-t)*t * cp + t**2 * p1;
+        const easeInOut = t => t < 0.5 ? 2*t*t : 1 - (-2*t+2)**2/2;
+
+        const frame = (now) => {
+          const raw = Math.min((now - start) / duration, 1);
+          const t   = easeInOut(raw);
+
+          if (bubble1Ref.current) {
+            bubble1Ref.current.style.left = bezier(t, s1.left, ctrl1.x, dLeft) + 'px';
+            bubble1Ref.current.style.top  = bezier(t, s1.top,  ctrl1.y, dTop)  + 'px';
+          }
+          if (bubble2Ref.current) {
+            bubble2Ref.current.style.left = bezier(t, s2.left, ctrl2.x, dLeft) + 'px';
+            bubble2Ref.current.style.top  = bezier(t, s2.top,  ctrl2.y, dTop)  + 'px';
+          }
+
+          if (raw < 1) {
+            arcAnimRef.current = requestAnimationFrame(frame);
+          } else {
+            // Arc done — bubbles vanish, sparkle explodes, then N appears when sound ends
+            setBubbles(null);
+            setDenAnimating(false);
+            setDenVisible(true);
+            setShowDenSparkle(true);
+            setTimeout(() => setShowDenSparkle(false), 800);
+            const explodeSound = new Audio('/SoundEffects/sparkleExplode.wav');
+            explodeSound.play().catch(() => {});
+            explodeSound.addEventListener('ended', () => {
+              setTimeout(() => {
+                setNVisible(true);
+                new Audio('/SoundEffects/circleAppear.wav').play().catch(() => {});
+              }, 200);
+            });
+          }
+        };
+        arcAnimRef.current = requestAnimationFrame(frame);
+      }, 2000);
+    }
     setCircleDetected(true);
+    setDenAnimating(true);
   };
 
   const handleWrongAnswer = (hint, submittedValue) => {
@@ -80,6 +206,19 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     setFeedbackType('');
     setCircleDetected(false);
     setCurrentHint('');
+    setMagicN('');
+    setDenVisible(false);
+    setNVisible(false);
+    setHintUsed(false);
+    setPhase2HintUsed(false);
+    setFormulaVisible(false);
+    setCheckPhase(false);
+    setSimplifiedInput('');
+    setSimplifiedDenInput('');
+    setFinalAnswerVisible(false);
+    setCheckButtonReady(false);
+    setShowNSparkle(false);
+    setDBubble(null);
     generateNextProblem();
   };
 
@@ -103,6 +242,53 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   };
 
   const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+
+  const launchFireball = (onHit) => {
+    const pBox = playerBoxRef.current || playerRef.current;
+    const eBox = enemyBoxRef.current  || enemyRef.current;
+    if (!pBox || !eBox) return;
+    const pr = pBox.getBoundingClientRect();
+    const er = eBox.getBoundingClientRect();
+    const SIZE = 120;
+    const sx = pr.right - SIZE / 2;          // right edge of player box
+    const sy = pr.top + pr.height / 2 - SIZE / 2; // vertical center of player box
+    const ex = er.left + er.width  / 2 - SIZE / 2;
+    const ey = er.top  + er.height / 2 - SIZE / 2;
+    const cpx = (sx + ex) / 2;
+    const cpy = Math.min(sy, ey) - 80;
+
+    // Phase 1 — appear at player, play spellCast
+    setFireball({ x: sx, y: sy });
+    new Audio('/SoundEffects/spellCast.wav').play().catch(() => {});
+
+    // Phase 2 — after hold, start flying and play spellThrow
+    setTimeout(() => {
+      new Audio('/SoundEffects/spellThrow.wav').play().catch(() => {});
+      const duration = 600;
+      const start = performance.now();
+      const bezier = (t, p0, cp, p1) => (1-t)**2*p0 + 2*(1-t)*t*cp + t**2*p1;
+      const ease = t => t < 0.5 ? 2*t*t : 1-((-2*t+2)**2)/2;
+      const frame = (now) => {
+        const raw = Math.min((now - start) / duration, 1);
+        const t = ease(raw);
+        if (fireballRef.current) {
+          fireballRef.current.style.left = bezier(t, sx, cpx, ex) + 'px';
+          fireballRef.current.style.top  = bezier(t, sy, cpy, ey) + 'px';
+        }
+        if (raw < 1) {
+          fireballAnimRef.current = requestAnimationFrame(frame);
+        } else {
+          // Phase 3 — immediately on landing
+          new Audio('/SoundEffects/spellHit.wav').play().catch(() => {});
+          setFireball(null);
+          setEnemyFlashing(true);
+          onHit?.();
+          setTimeout(() => setEnemyFlashing(false), 500);
+        }
+      };
+      fireballAnimRef.current = requestAnimationFrame(frame);
+    }, 800);
+  };
 
   const handleAnswerSubmit = async (submittedAnswer) => {
     setAnswer(submittedAnswer);
@@ -136,7 +322,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     const newEnemyHealth = Math.max(0, enemyHealth - (isCorrect ? 33 : 0));
     const newStreak = isCorrect ? streak + 1 : 0;
     const newMultiplier = Math.min(2.0, 1.0 + newStreak * 0.2);
-    const pointsEarned = isCorrect ? Math.floor(10 * newMultiplier) : 0;
+    const pointsEarned = isCorrect && !hintUsed && !phase2HintUsed ? Math.floor(10 * newMultiplier) : 0;
     const newScore = score + pointsEarned;
     const newLives = isCorrect ? lives : lives - 1;
 
@@ -261,6 +447,27 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   };
 
   const generateNextProblem = () => {
+    setDenVisible(false);
+    setNVisible(false);
+    setHintUsed(false);
+    setPhase2HintUsed(false);
+    setFormulaVisible(false);
+    setCheckPhase(false);
+    setSimplifiedInput('');
+    setSimplifiedDenInput('');
+    setDBubble(null);
+    setFinalAnswerVisible(false);
+    setCheckButtonReady(false);
+    setShowNSparkle(false);
+    if (dBubbleAnimRef.current) cancelAnimationFrame(dBubbleAnimRef.current);
+    setInteractableVisible(true);
+    setMagicN('');
+    actionLocked.current = false;
+    setDenAnimating(false);
+    setShowDenSparkle(false);
+    setAppearSparkles([]);
+    setBubbles(null);
+    if (arcAnimRef.current) { cancelAnimationFrame(arcAnimRef.current); arcAnimRef.current = null; }
     const denominator = Math.floor(Math.random() * 8) + 2;
     const numerator1 = Math.floor(Math.random() * (denominator - 1)) + 1;
     const numerator2 = Math.floor(Math.random() * (denominator - 1)) + 1;
@@ -288,6 +495,17 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   const displayNum2 = problemMatch ? problemMatch[4] : '?';
   const displayDen2 = problemMatch ? problemMatch[5] : '?';
 
+  // Determine if the simplified result is a whole number (for Phase 2 input UI)
+  const simplifiedResultIsWhole = (() => {
+    if (!problemMatch) return false;
+    const n1 = parseInt(displayNum1), op = displayOp, n2 = parseInt(displayNum2);
+    const rn = op === '+' ? n1 + n2 : n1 - n2;
+    const d  = parseInt(displayDen1);
+    let a = Math.abs(rn), b = d;
+    while (b) { const t = b; b = a % b; a = t; }
+    return d / a === 1;
+  })();
+
   const renderHearts = (count, max) => {
     const hearts = [];
     for (let i = 0; i < max; i++) {
@@ -310,13 +528,15 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
-        minHeight: '100vh',
-        padding: '20px',
+        height: '100svh',
+        overflow: 'hidden',
+        padding: '20px 20px 0',
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
         maxWidth: '1200px',
         margin: '0 auto',
+        boxSizing: 'border-box',
       }}
     >
       <div
@@ -360,7 +580,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         }}
       >
         <span style={{ fontSize: '14px' }}>
-          {currentHint ? `💡 Hint: ${currentHint}` : '💡 Hint: Answer each step correctly to cast your spell!'}
+          {currentHint ? `Hint: ${currentHint}` : 'Hint: Answer each step correctly to cast your spell!'}
         </span>
       </div>
 
@@ -368,6 +588,8 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         className="wireframe-battle-area"
         style={{
           flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
@@ -379,36 +601,41 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             display: 'flex',
             justifyContent: 'space-around',
             alignItems: 'center',
+            paddingTop: '32px',
           }}
         >
-          <div style={{ display: 'flex', gap: '5px' }}>{renderHearts(lives, 3)}</div>
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>Problem</div>
-          <div style={{ display: 'flex', gap: '5px' }}>{renderHearts(enemyLives, 3)}</div>
         </div>
 
         <div
           className="wireframe-main-battle"
           style={{
             display: 'flex',
-            justifyContent: 'space-around',
-            alignItems: 'center',
+            justifyContent: 'space-between',
+            alignItems: 'stretch',
             flex: 1,
+            minHeight: 0,
+            padding: '20px 20px 0',
+            gap: '10px',
           }}
         >
           <div
+            ref={playerRef}
             className="wireframe-player"
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '10px',
+              gap: '6px',
             }}
           >
+            <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(lives, 3)}</div>
             <div
+              ref={playerBoxRef}
               style={{
-                width: '150px',
-                height: '150px',
-                border: '2px solid #888',
+                width: '240px',
+                height: '240px',
+                border: 'none',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -419,12 +646,12 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                 position: 'absolute',
                 width: '100%',
                 height: '100%',
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #888 10px, #888 12px)',
+                background: 'transparent',
               }}></div>
               <img
                 src={selectedCharacter?.name?.toLowerCase().includes('girl') ? '/Female.png' : '/Male.png'}
                 alt="Player"
-                style={{ position: 'relative', zIndex: 1, width: '120px', height: '120px', objectFit: 'contain' }}
+                style={{ position: 'relative', zIndex: 1, width: '170px', height: '170px', objectFit: 'contain' }}
               />
             </div>
             <h3 style={{ margin: 0, fontSize: '20px' }}>Player</h3>
@@ -437,10 +664,16 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
               flexDirection: 'column',
               alignItems: 'center',
               gap: '20px',
+              paddingTop: '32px',
+              flex: 1,
+              minHeight: 0,
+              width: 0,
+              overflow: 'hidden',
             }}
           >
             <div
-              className="wireframe-fraction-display"
+              key={currentProblem}
+              className="wireframe-fraction-display problem-fade-in"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -476,6 +709,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                     textAlign: 'center',
                     color: '#000',
                   }}
+                  ref={den1Ref}
                   value={displayDen1}
                   readOnly
                 />
@@ -524,6 +758,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                     textAlign: 'center',
                     color: '#000',
                   }}
+                  ref={den2Ref}
                   value={displayDen2}
                   readOnly
                 />
@@ -531,47 +766,448 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             </div>
 
             <div
+              ref={rectWrapperRef}
+              style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', width: '100%' }}
+            >
+            <div
+              ref={circleContainerRef}
               style={{
                 width: '400px',
-                height: '300px',
-                background: '#e0d5d9',
-                border: '4px dashed #fff',
-                borderRadius: '20px',
+                height: '440px',
+                flexShrink: 0,
+                transform: `scale(${rectScale})`,
+                transformOrigin: 'bottom center',
+                background: 'none',
+                border: '4px solid #f6b825',
+                borderRadius: 12,
+                boxShadow: '0 0 0 2px #18113c',
                 display: 'flex',
                 justifyContent: 'center',
+                opacity: interactableVisible ? 1 : 0,
+                pointerEvents: interactableVisible ? 'auto' : 'none',
+                transition: 'opacity 0.4s ease',
                 alignItems: 'center',
                 position: 'relative',
+                marginBottom: '50px',
               }}
             >
+              {/* Gradient layer — behind everything */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(to bottom, rgba(37,30,89,0) 0%, rgba(37,30,89,0.96) 100%)',
+                borderRadius: 8,
+                zIndex: 0,
+                pointerEvents: 'none',
+              }} />
+              {/* Inner thin border (matches button double-border style) */}
+              <div style={{
+                position: 'absolute', inset: 8,
+                border: '1px solid #f6b825',
+                borderRadius: 6,
+                zIndex: 0,
+                pointerEvents: 'none',
+              }} />
+
+              {/* Book — above gradient, below magic circle */}
+              <style>{`
+                @keyframes bookFloat {
+                  0%, 100% { transform: translateX(-50%) translateY(0); }
+                  50%       { transform: translateX(-50%) translateY(-7px); }
+                }
+              `}</style>
+              <img
+                src="/InteractableUI/BookUI.png"
+                alt="book"
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '50%',
+                  width: '140%',
+                  objectFit: 'contain',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  animation: 'bookFloat 6s ease-in-out infinite',
+                }}
+              />
+
+              {/* Bottom-centre row: Hint + Cast Spell */}
+              {nVisible && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: 12, left: '50%',
+                  display: 'flex', gap: 10,
+                  zIndex: 4,
+                  animation: 'nAreaFadeIn 0.5s ease-out forwards',
+                }}>
+                  {!checkPhase ? (
+                  /* Phase 1 — Cast Spell */
+                  <button
+                    style={{
+                      padding: '8px 56px',
+                      background: '#251e59',
+                      border: '4px solid #f6b825',
+                      borderRadius: 12,
+                      boxShadow: '0 0 0 2px #18113c',
+                      outline: '1px solid #f6b825',
+                      outlineOffset: '-10px',
+                      fontSize: 15, fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      cursor: circleDetected && magicN ? 'pointer' : 'not-allowed',
+                      color: '#f6b825',
+                      opacity: circleDetected && magicN ? 1 : 0.45,
+                      backdropFilter: 'blur(6px)',
+                    }}
+                    disabled={!circleDetected || !magicN}
+                    onClick={() => {
+                      if (actionLocked.current) return;
+                      actionLocked.current = true;
+                      const m = currentProblem.match(/(\d+)\/(\d+)\s*([+-])\s*(\d+)\/(\d+)/);
+                      if (m) {
+                        const n1 = parseInt(m[1]), op = m[3], n2 = parseInt(m[4]);
+                        if (parseInt(magicN) === (op === '+' ? n1 + n2 : n1 - n2)) {
+                          setCheckPhase(true);
+                          // Animate D bubble up to N position
+                          if (circleContainerRef.current) {
+                            const cRect = circleContainerRef.current.getBoundingClientRect();
+                            const SZ = 44;
+                            const scale = rectScaleRef.current;
+                            const sx = cRect.left + cRect.width * 0.5 - SZ / 2;
+                            const sy = cRect.top + 252 * scale - SZ / 2;
+                            const ex = sx;
+                            const ey = cRect.top + (32 + 129) * scale - SZ / 2;
+                            setDBubble({ x: sx, y: sy });
+                            const dur = 800, t0 = performance.now();
+                            const ease = t => t < 0.5 ? 2*t*t : 1-((-2*t+2)**2)/2;
+                            const anim = (now) => {
+                              const raw = Math.min((now - t0) / dur, 1);
+                              const t = ease(raw);
+                              if (dBubbleRef.current) {
+                                dBubbleRef.current.style.left = ex + 'px';
+                                dBubbleRef.current.style.top  = (sy + (ey - sy) * t) + 'px';
+                              }
+                              if (raw < 1) { dBubbleAnimRef.current = requestAnimationFrame(anim); }
+                              else {
+                                setShowNSparkle(true);
+                                setTimeout(() => setShowNSparkle(false), 800);
+                                const explode = new Audio('/SoundEffects/sparkleExplode.wav');
+                                explode.play().catch(() => {});
+                                explode.addEventListener('ended', () => {
+                                  setDBubble(null);
+                                  setFinalAnswerVisible(true);
+                                  setFormulaVisible(false);
+                                  setTimeout(() => { setCheckButtonReady(true); actionLocked.current = false; }, 600);
+                                  new Audio('/SoundEffects/circleAppear.wav').play().catch(() => {});
+                                });
+                              }
+                            };
+                            dBubbleAnimRef.current = requestAnimationFrame(anim);
+                          }
+                          return;
+                        }
+                      }
+                      // Wrong numerator — fail immediately, no Phase 2
+                      const wrongAnswer = `${magicN}/${displayDen1}`;
+                      setMagicN('');
+                      setInteractableVisible(false);
+                      handleAnswerSubmit(wrongAnswer);
+                    }}
+                  >Cast Spell</button>
+                  ) : finalAnswerVisible ? (
+                  /* Phase 2 — Check (validates simplified fraction) */
+                  <button
+                    style={{
+                      padding: '8px 56px',
+                      background: '#251e59',
+                      border: '4px solid #f6b825',
+                      borderRadius: 12,
+                      boxShadow: '0 0 0 2px #18113c',
+                      outline: '1px solid #f6b825',
+                      outlineOffset: '-10px',
+                      fontSize: 15, fontWeight: 700,
+                      cursor: checkButtonReady && (simplifiedResultIsWhole ? simplifiedInput : simplifiedInput && simplifiedDenInput) ? 'pointer' : 'not-allowed',
+                      color: '#f6b825',
+                      opacity: checkButtonReady ? ((simplifiedResultIsWhole ? simplifiedInput : simplifiedInput && simplifiedDenInput) ? 1 : 0.45) : undefined,
+                      pointerEvents: checkButtonReady ? 'auto' : 'none',
+                      backdropFilter: 'blur(6px)',
+                      animation: checkButtonReady ? 'none' : 'dimFadeIn 0.6s ease-out forwards',
+                      transition: checkButtonReady ? 'opacity 0.2s ease' : 'none',
+                    }}
+                    disabled={!checkButtonReady || (simplifiedResultIsWhole ? !simplifiedInput : (!simplifiedInput || !simplifiedDenInput))}
+                    onClick={() => {
+                      if (actionLocked.current) return;
+                      actionLocked.current = true;
+                      const answer = simplifiedResultIsWhole
+                        ? simplifiedInput.trim()
+                        : `${simplifiedInput.trim()}/${simplifiedDenInput.trim()}`;
+                      setSimplifiedInput('');
+                      setSimplifiedDenInput('');
+                      setCheckPhase(false);
+                      setInteractableVisible(false);
+                      const m = currentProblem.match(/(\d+)\/(\d+)\s*([+-])\s*(\d+)\/(\d+)/);
+                      let correct = false;
+                      if (m) {
+                        const n1 = parseInt(m[1]), d = parseInt(m[2]), op = m[3], n2 = parseInt(m[4]);
+                        const rn = op === '+' ? n1 + n2 : n1 - n2;
+                        const div = gcd(Math.abs(rn), d);
+                        const sn = rn / div, sd = d / div;
+                        correct = answer === `${sn}/${sd}` || (answer === `${sn}` && sd === 1);
+                      }
+                      if (correct) {
+                        launchFireball(() => handleAnswerSubmit(answer));
+                      } else {
+                        handleAnswerSubmit(answer);
+                      }
+                    }}
+                  >Check</button>
+                  ) : null}
+                  {((!hintUsed && !checkPhase) || (!phase2HintUsed && finalAnswerVisible)) && (
+                    <button
+                      onClick={() => finalAnswerVisible
+                        ? (setPhase2HintUsed(true), setFormulaVisible(true))
+                        : setShowHintConfirm(true)
+                      }
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: 13, fontWeight: 700,
+                        background: '#251e59',
+                        border: '4px solid #f6b825',
+                        borderRadius: 12,
+                        boxShadow: '0 0 0 2px #18113c',
+                        outline: '1px solid #f6b825',
+                        outlineOffset: '-10px',
+                        color: '#f6b825',
+                        cursor: 'pointer',
+                        backdropFilter: 'blur(6px)',
+                        animation: 'problemFadeIn 0.4s ease-out',
+                      }}
+                    >Hint</button>
+                  )}
+                </div>
+              )}
+
+              {!circleDetected && (
+                <p style={{
+                  position: 'absolute',
+                  top: 16, left: '50%',
+                  transform: 'translateX(-50%)',
+                  margin: 0,
+                  color: '#fff',
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  textShadow: '0 0 10px rgba(0,0,0,0.9), 2px 2px 6px rgba(0,0,0,0.8)',
+                  zIndex: 3,
+                  pointerEvents: 'none',
+                }}>Draw a circle to continue!</p>
+              )}
+
               {!circleDetected ? (
-                <DrawingCanvas onCircleDetected={handleCircleDetected} />
+                <div style={{ position: 'absolute', inset: 0, zIndex: 3 }}>
+                  <DrawingCanvas onCircleDetected={handleCircleDetected} />
+                </div>
               ) : (
-                <FractionPattern
-                  ref={fractionPatternRef}
-                  problem={currentProblem.replace(' = ?', '')}
-                  onAnswerSubmit={handleAnswerSubmit}
-                  onWrongAnswer={handleWrongAnswer}
-                  onStepCorrect={() => setCurrentHint('')}
-                  onRequestNewProblem={handleRequestNewProblem}
-                />
+                <>
+                  <style>{`
+                    @keyframes dimFadeIn {
+                      from { opacity: 0; transform: translateY(-10px); }
+                      to   { opacity: 0.3; transform: translateY(0); }
+                    }
+                    @keyframes sparkBurst {
+                      0%   { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+                      100% { transform: translate(-50%, -50%) scale(3);   opacity: 0; }
+                    }
+                    @keyframes nAreaFadeIn {
+                      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+                      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    }
+                    @keyframes magicFloat {
+                      0%, 100% { transform: translateY(0px); }
+                      50%       { transform: translateY(-22px); }
+                    }
+                  `}</style>
+
+                  {/* Floating wrapper — circle image + inputs all hover together */}
+                  <div style={{
+                    position: 'absolute', top: 32, left: 0, right: 0,
+                    height: '300px',
+                    animation: 'magicFloat 4s ease-in-out infinite',
+                    zIndex: 2,
+                  }}>
+                    <img
+                      src="/InteractableUI/SimilarMagicCircle.png"
+                      alt="magic circle"
+                      style={{
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0,
+                        width: '100%', height: '100%',
+                        objectFit: 'contain',
+                        pointerEvents: 'none',
+                        animation: 'problemFadeIn 0.5s ease-out',
+                      }}
+                    />
+                    {/* Numerator / Simplified fraction area — fades in, fades out when D moves */}
+                    {nVisible && <div style={{
+                      position: 'absolute',
+                      left: '50%', top: finalAnswerVisible ? (simplifiedResultIsWhole ? '62px' : '46px') : '78px',
+                      zIndex: 2,
+                      opacity: dBubble ? 0 : 1,
+                      transition: 'opacity 0.3s ease',
+                      pointerEvents: dBubble ? 'none' : 'auto',
+                    }}>
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                      animation: 'nAreaFadeIn 0.5s ease-out forwards',
+                    }}>
+                      <span style={{
+                        fontSize: 18, fontWeight: 800, color: '#fff',
+                        textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                        whiteSpace: 'nowrap',
+                        visibility: formulaVisible ? 'visible' : 'hidden',
+                      }}>
+                        {finalAnswerVisible
+                          ? `Simplify: ${parseInt(displayNum1) + (displayOp === '+' ? parseInt(displayNum2) : -parseInt(displayNum2))}/${displayDen1}`
+                          : `${displayNum1} ${displayOp} ${displayNum2} =`}
+                      </span>
+                      {!finalAnswerVisible ? (
+                        /* Phase 1 — numerator input */
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={magicN}
+                          onChange={e => setMagicN(e.target.value.replace(/[^0-9-]/g, ''))}
+                          placeholder="?"
+                          style={{
+                            width: 90, height: 64,
+                            fontSize: 32, fontWeight: 800, textAlign: 'center',
+                            border: '3px dashed #ffffff', borderRadius: 10,
+                            background: 'transparent', color: '#fff',
+                            outline: 'none', appearance: 'none',
+                            WebkitAppearance: 'none', MozAppearance: 'none',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
+                            textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                          }}
+                        />
+                      ) : (
+                        /* Phase 2 — simplified fraction input */
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, animation: 'problemFadeIn 0.4s ease-out' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.8)', textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>Final Answer:</span>
+                          {simplifiedResultIsWhole ? (
+                            /* Whole number — single field */
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={simplifiedInput}
+                              onChange={e => setSimplifiedInput(e.target.value.replace(/[^0-9-]/g, ''))}
+                              autoFocus
+                              style={{
+                                width: 90, height: 64,
+                                fontSize: 28, fontWeight: 800, textAlign: 'center',
+                                border: '3px dashed #f6b825', borderRadius: 10,
+                                background: 'transparent', color: '#f6b825',
+                                outline: 'none', appearance: 'none',
+                                WebkitAppearance: 'none', MozAppearance: 'none',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
+                                textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                              }}
+                            />
+                          ) : (
+                            /* Fraction — numerator / bar / denominator */
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={simplifiedInput}
+                                onChange={e => setSimplifiedInput(e.target.value.replace(/[^0-9-]/g, ''))}
+                                autoFocus
+                                style={{
+                                  width: 90, height: 54,
+                                  fontSize: 28, fontWeight: 800, textAlign: 'center',
+                                  border: '3px dashed #f6b825', borderRadius: 10,
+                                  background: 'transparent', color: '#f6b825',
+                                  outline: 'none', appearance: 'none',
+                                  WebkitAppearance: 'none', MozAppearance: 'none',
+                                  boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
+                                  textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                                }}
+                              />
+                              <div style={{ width: 90, height: 3, background: '#f6b825', borderRadius: 2 }} />
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={simplifiedDenInput}
+                                onChange={e => setSimplifiedDenInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                style={{
+                                  width: 90, height: 54,
+                                  fontSize: 28, fontWeight: 800, textAlign: 'center',
+                                  border: '3px dashed #f6b825', borderRadius: 10,
+                                  background: 'transparent', color: '#f6b825',
+                                  outline: 'none', appearance: 'none',
+                                  WebkitAppearance: 'none', MozAppearance: 'none',
+                                  boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
+                                  textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div></div>}
+                    {/* Burst sparkle when D value appears */}
+                    {showDenSparkle && (
+                      <img src="/BlueSparkle.png" alt="" style={{
+                        position: 'absolute', left: '50%', top: '249px',
+                        width: 72, height: 72, pointerEvents: 'none',
+                        zIndex: 3, animation: 'sparkBurst 0.8s ease-out forwards',
+                      }} />
+                    )}
+                    {showNSparkle && (
+                      <img src="/BlueSparkle.png" alt="" style={{
+                        position: 'absolute', left: '50%', top: '129px',
+                        width: 72, height: 72, pointerEvents: 'none',
+                        zIndex: 3, animation: 'sparkBurst 0.8s ease-out forwards',
+                      }} />
+                    )}
+
+                    {/* Denominator — appears only after animation completes */}
+                    <div style={{
+                      position: 'absolute',
+                      left: '50%', top: '231px',
+                      transform: 'translateX(-50%)',
+                      width: 40, height: 36,
+                      fontSize: 20, fontWeight: 900, textAlign: 'center',
+                      background: 'transparent', color: '#fff',
+                      textShadow: '0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8)',
+                      zIndex: 2,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: denVisible && !checkPhase && !dBubble ? 1 : 0,
+                      transition: 'opacity 0.3s ease',
+                    }}>
+                      {denVisible ? displayDen1 : ''}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
+            </div>{/* rectWrapperRef */}
           </div>
 
           <div
+            ref={enemyRef}
             className="wireframe-enemy"
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '10px',
+              gap: '6px',
             }}
           >
+            <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(enemyLives, 3)}</div>
             <div
+              ref={enemyBoxRef}
               style={{
-                width: '150px',
-                height: '150px',
-                border: '2px solid #888',
+                width: '240px',
+                height: '240px',
+                border: 'none',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -582,18 +1218,27 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                 position: 'absolute',
                 width: '100%',
                 height: '100%',
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #888 10px, #888 12px)',
+                background: 'transparent',
               }}></div>
-              <img 
-                src="/enemy1.png" 
-                alt="Enemy" 
-                style={{ 
-                  position: 'relative', 
-                  zIndex: 1, 
-                  width: '120px', 
-                  height: '120px', 
-                  objectFit: 'contain' 
-                }} 
+              <style>{`
+                @keyframes enemyFlash {
+                  0%, 100% { filter: brightness(1); }
+                  25%       { filter: brightness(3) saturate(0); }
+                  50%       { filter: brightness(1); }
+                  75%       { filter: brightness(3) saturate(0); }
+                }
+              `}</style>
+              <img
+                src="/enemy1.png"
+                alt="Enemy"
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  width: '88%',
+                  height: '88%',
+                  objectFit: 'contain',
+                  animation: enemyFlashing ? 'enemyFlash 0.5s ease-out' : 'none',
+                }}
               />
             </div>
             <h3 style={{ margin: 0, fontSize: '20px' }}>Enemy</h3>
@@ -601,25 +1246,6 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-
-        <button
-          className="wireframe-cast-btn"
-          style={{
-            padding: '10px 40px',
-            background: circleDetected ? '#8b5cf6' : '#ddd',
-            border: '2px solid #888',
-            fontSize: '18px',
-            cursor: circleDetected ? 'pointer' : 'not-allowed',
-            color: circleDetected ? '#fff' : '#999',
-            opacity: circleDetected ? 1 : 0.6,
-          }}
-          disabled={!circleDetected}
-          onClick={() => fractionPatternRef.current?.submitCurrentStep()}
-        >
-          Cast Spell
-        </button>
-      </div>
 
       {feedback && (
         <div
@@ -662,6 +1288,117 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             </button>
           </div>
         </div>
+      )}
+
+      {showTutorial && (
+        <SimilarFractionTutorial onComplete={() => setShowTutorial(false)} />
+      )}
+
+      {dBubble && (
+        <>
+          <style>{`
+            @keyframes sparkleSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
+        <div ref={dBubbleRef} style={{
+          position: 'fixed', left: dBubble.x, top: dBubble.y,
+          width: 48, height: 48,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, pointerEvents: 'none',
+        }}>
+          <img src="/BlueSparkle.png" alt="" style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            animation: 'sparkleSpin 1.2s linear infinite',
+          }} />
+          <span style={{ position: 'relative', zIndex: 1, fontSize: 18, fontWeight: 900, color: '#fff', textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
+            {displayDen1}
+          </span>
+        </div>
+        </>
+      )}
+
+      {fireball && (
+        <>
+          <style>{`
+            @keyframes fireballFadeIn {
+              from { opacity: 0; transform: scale(0.5); }
+              to   { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
+          <img
+            ref={fireballRef}
+            src="/CombatGraphics/fireballAnimation.gif"
+            alt="fireball"
+            style={{
+              position: 'fixed',
+              left: fireball.x,
+              top: fireball.y,
+              width: 120, height: 120,
+              pointerEvents: 'none',
+              zIndex: 9999,
+              animation: 'fireballFadeIn 0.3s ease-out',
+            }}
+          />
+        </>
+      )}
+
+      {showHintConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '36px 44px', textAlign: 'center', maxWidth: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+            <p style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>Are you sure you want a hint?</p>
+            <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>Using a hint removes points for this problem.</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => { setHintUsed(true); setFormulaVisible(true); setShowHintConfirm(false); }}
+                style={{ padding: '10px 24px', fontWeight: 700, background: '#f59e0b', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#fff' }}>
+                Yes, show hint
+              </button>
+              <button onClick={() => setShowHintConfirm(false)}
+                style={{ padding: '10px 24px', fontWeight: 700, background: '#e5e7eb', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#374151' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+{bubbles && (
+        <>
+          <style>{`
+            @keyframes sparkleSpin {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
+            }
+          `}</style>
+          {[['b1', bubble1Ref, displayDen1], ['b2', bubble2Ref, displayDen2]].map(([key, ref, val]) => (
+            <div key={key} ref={ref} style={{
+              position: 'fixed',
+              left: bubbles[key].left,
+              top: bubbles[key].top,
+              width: 48, height: 48,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 9999, pointerEvents: 'none',
+              opacity: bubbles[key].opacity,
+              transition: 'opacity 0.3s ease',
+            }}>
+              {/* Spinning sparkle behind */}
+              <img
+                src="/BlueSparkle.png"
+                alt=""
+                style={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  animation: 'sparkleSpin 1.2s linear infinite',
+                  pointerEvents: 'none',
+                }}
+              />
+              {/* Number on top */}
+              <span style={{
+                position: 'relative', zIndex: 1,
+                fontSize: 18, fontWeight: 900, color: '#fff',
+                textShadow: '0 0 6px rgba(0,0,0,0.9)',
+              }}>{val}</span>
+            </div>
+          ))}
+        </>
       )}
 
       {showExitModal && (
