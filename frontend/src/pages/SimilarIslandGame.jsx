@@ -177,7 +177,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     const newLives = lives - 1;
     setLives(newLives);
     setEnemyAttacking(true);
-    setFeedback(hint ? `✗ Wrong! ${hint}` : '✗ Wrong answer! You lost a heart.');
+    setFeedback(hint ? `Wrong! ${hint}` : 'Wrong answer! You lost a heart.');
     setFeedbackType('incorrect');
     if (hint) setCurrentHint(hint);
 
@@ -187,7 +187,8 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       const resNum = match[3] === '+' ? parseInt(match[1]) + parseInt(match[4]) : parseInt(match[1]) - parseInt(match[4]);
       const resDen = parseInt(match[2]);
       const divisor = gcd(Math.abs(resNum), resDen);
-      correctAnswerStr = `${resNum / divisor}/${resDen / divisor}`;
+      const sn = resNum / divisor, sd = resDen / divisor;
+      correctAnswerStr = sd === 1 ? `${sn}` : `${sn}/${sd}`;
     }
 
     const attempt = {
@@ -337,8 +338,8 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       
       const nonSimplifiedAnswer = `${resNum}/${resDen}`;
       const simplifiedAnswer = `${simplifiedNum}/${simplifiedDen}`;
-      
-      correctAnswerStr = simplifiedAnswer;
+
+      correctAnswerStr = simplifiedDen === 1 ? `${simplifiedNum}` : simplifiedAnswer;
       isCorrect = submittedAnswer === nonSimplifiedAnswer || submittedAnswer === simplifiedAnswer || 
                    (submittedAnswer === `${simplifiedNum}` && simplifiedDen === 1);
     }
@@ -382,9 +383,12 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     setFeedbackType(isCorrect ? 'correct' : 'incorrect');
     setFeedback(
       isCorrect
-        ? `✓ Correct! +${pointsEarned} points`
-        : `✗ Incorrect. The answer is ${correctAnswerStr}`
+        ? `Correct! +${pointsEarned} points`
+        : `Incorrect. The answer is ${correctAnswerStr}`
     );
+    if (!isCorrect) {
+      new Audio('/VoiceLines/castFailure.wav').play().catch(() => {});
+    }
 
     if (!isCorrect) {
       setEnemyAttacking(true);
@@ -857,6 +861,38 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                 marginBottom: '50px',
               }}
             >
+              {/* Rising particles inside the interactable rectangle */}
+              {[
+                { left: '3%',  size: 8,  dur: '2.2s', delay: '0s'    },
+                { left: '10%', size: 5,  dur: '1.7s', delay: '-0.5s' },
+                { left: '17%', size: 10, dur: '2.5s', delay: '-1.2s' },
+                { left: '24%', size: 6,  dur: '1.9s', delay: '-0.8s' },
+                { left: '31%', size: 9,  dur: '2.3s', delay: '-1.6s' },
+                { left: '38%', size: 5,  dur: '2.0s', delay: '-0.3s' },
+                { left: '45%', size: 11, dur: '2.6s', delay: '-2.0s' },
+                { left: '52%', size: 6,  dur: '1.8s', delay: '-0.9s' },
+                { left: '59%', size: 8,  dur: '2.4s', delay: '-1.5s' },
+                { left: '66%', size: 4,  dur: '1.6s', delay: '-2.3s' },
+                { left: '73%', size: 7,  dur: '2.1s', delay: '-0.6s' },
+                { left: '80%', size: 5,  dur: '1.9s', delay: '-1.8s' },
+                { left: '87%', size: 9,  dur: '2.3s', delay: '-1.1s' },
+                { left: '93%', size: 6,  dur: '2.0s', delay: '-2.5s' },
+                { left: '8%',  size: 4,  dur: '1.8s', delay: '-3.0s' },
+                { left: '28%', size: 7,  dur: '2.2s', delay: '-0.4s' },
+                { left: '42%', size: 5,  dur: '1.7s', delay: '-1.9s' },
+                { left: '62%', size: 10, dur: '2.4s', delay: '-0.7s' },
+                { left: '77%', size: 6,  dur: '2.1s', delay: '-2.8s' },
+                { left: '91%', size: 8,  dur: '1.9s', delay: '-1.3s' },
+              ].map((p, i) => (
+                <div key={i} style={{
+                  position: 'absolute', bottom: 4, left: p.left,
+                  width: p.size, height: p.size,
+                  background: '#703737',
+                  pointerEvents: 'none', zIndex: 1,
+                  animation: `particleRise ${p.dur} ease-out ${p.delay} infinite`,
+                }} />
+              ))}
+
               {/* Solid background — no gradient */}
               <div style={{
                 position: 'absolute', inset: 0,
@@ -989,6 +1025,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                         }
                       }
                       // Wrong numerator — fail immediately, no Phase 2
+                      new Audio('/VoiceLines/castFailure.wav').play().catch(() => {});
                       const wrongAnswer = `${magicN}/${displayDen1}`;
                       setMagicN('');
                       setInteractableVisible(false);
@@ -1046,7 +1083,13 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                         correct = answer === `${sn}/${sd}` || (answer === `${sn}` && sd === 1);
                       }
                       if (correct) {
-                        setTimeout(() => launchFireball(() => handleAnswerSubmit(answer)), 500);
+                        new Audio('/VoiceLines/castSuccess.wav').play().catch(() => {});
+                        setTimeout(() => launchFireball(() => {
+                          if (!hintUsed && !phase2HintUsed) {
+                            new Audio('/VoiceLines/directHit.wav').play().catch(() => {});
+                          }
+                          handleAnswerSubmit(answer);
+                        }), 500);
                       } else {
                         setTimeout(() => handleAnswerSubmit(answer), 500);
                       }
@@ -1194,6 +1237,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                             border: '3px dashed #222', borderRadius: 0,
                             background: 'transparent', color: '#222',
                             outline: 'none', appearance: 'none',
+                            fontFamily: '"Press Start 2P", monospace',
                             WebkitAppearance: 'none', MozAppearance: 'none',
                           }}
                         />
@@ -1215,6 +1259,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                                 border: '3px dashed #222', borderRadius: 0,
                                 background: 'transparent', color: '#222',
                                 outline: 'none', appearance: 'none',
+                            fontFamily: '"Press Start 2P", monospace',
                                 WebkitAppearance: 'none', MozAppearance: 'none',
                                 boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
                                 textShadow: '0 0 8px rgba(0,0,0,0.9)',
@@ -1233,8 +1278,9 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                                   width: 90, height: 54,
                                   fontSize: 28, fontWeight: 800, textAlign: 'center',
                                   border: '3px dashed #222', borderRadius: 0,
-                                  background: 'transparent', color: '#703737',
+                                  background: 'transparent', color: '#222',
                                   outline: 'none', appearance: 'none',
+                            fontFamily: '"Press Start 2P", monospace',
                                   WebkitAppearance: 'none', MozAppearance: 'none',
                                   boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
                                   textShadow: '0 0 8px rgba(0,0,0,0.9)',
@@ -1250,8 +1296,9 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                                   width: 90, height: 54,
                                   fontSize: 28, fontWeight: 800, textAlign: 'center',
                                   border: '3px dashed #222', borderRadius: 0,
-                                  background: 'transparent', color: '#703737',
+                                  background: 'transparent', color: '#222',
                                   outline: 'none', appearance: 'none',
+                            fontFamily: '"Press Start 2P", monospace',
                                   WebkitAppearance: 'none', MozAppearance: 'none',
                                   boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
                                   textShadow: '0 0 8px rgba(0,0,0,0.9)',
@@ -1383,16 +1430,30 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
 
 
       {feedback && (
-        <div
-          className="feedback"
-          style={{
-            textAlign: 'center',
-            padding: '20px',
-            marginTop: '10px',
-            border: '2px solid #888',
-            background: feedbackType === 'correct' ? '#d4edda' : '#f8d7da',
-          }}
-        >
+        <div style={{
+          position: 'fixed',
+          left: '50%',
+          zIndex: 5000,
+          textAlign: 'center',
+          padding: '10px 24px',
+          border: '4px solid #fff',
+          background: '#000',
+          color: feedbackType === 'correct' ? '#4ade80' : '#f87171',
+          fontSize: '11px', fontWeight: 700,
+          whiteSpace: 'nowrap',
+          animation: 'feedbackSlideToCenter 0.6s ease-out forwards',
+        }}>
+          {/* Inner thin border */}
+          <div style={{ position: 'absolute', inset: 5, border: '1px solid #fff', pointerEvents: 'none' }} />
+          {/* Corner squares */}
+          <div style={{ position: 'absolute', top: -6, left: -6, width: 10, height: 10, background: '#fff' }} />
+          <div style={{ position: 'absolute', top: -6, right: -6, width: 10, height: 10, background: '#fff' }} />
+          <div style={{ position: 'absolute', bottom: -6, left: -6, width: 10, height: 10, background: '#fff' }} />
+          <div style={{ position: 'absolute', bottom: -6, right: -6, width: 10, height: 10, background: '#fff' }} />
+          <div style={{ position: 'absolute', top: 3, left: 3, width: 5, height: 5, background: '#fff' }} />
+          <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: '#fff' }} />
+          <div style={{ position: 'absolute', bottom: 3, left: 3, width: 5, height: 5, background: '#fff' }} />
+          <div style={{ position: 'absolute', bottom: 3, right: 3, width: 5, height: 5, background: '#fff' }} />
           {feedback}
         </div>
       )}
