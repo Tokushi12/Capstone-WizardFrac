@@ -55,22 +55,20 @@ const StudentDashboard = ({ studentId, onBack }) => {
       {/* Header */}
       <div className="dashboard-header">
         <button className="back-btn" onClick={onBack}>← Back</button>
-        <div className="dashboard-title-block">
+        <div className="dashboard-title-box">
           <h1 className="dashboard-title">Progress Dashboard</h1>
-          <p className="dashboard-subtitle">Your Wizard Training Journey</p>
+          <p className="dashboard-subtitle">Your wizard training journey</p>
         </div>
-        {/* spacer to balance the back button */}
-        <div style={{ width: '90px', flexShrink: 0 }} />
       </div>
 
       <div className="dashboard-divider">
-        <span>✦ Stats ✦</span>
+        <span>Stats</span>
       </div>
 
       {!hasData ? (
         <div className="empty-state">
           <span className="empty-state-icon">🧙‍♂️</span>
-          <h2>Your Adventure Awaits!</h2>
+          <h2>Your Adventure Awaits</h2>
           <p>Start playing to see your progress and mastery stats here.</p>
         </div>
       ) : (
@@ -114,7 +112,7 @@ const StudentDashboard = ({ studentId, onBack }) => {
 
           {/* Gameplay history */}
           <div className="history-section">
-            <h3 className="section-title">History Game Played</h3>
+            <h3 className="section-title">Game History</h3>
             {gameHistory?.length > 0 ? (
               <div className="history-table-wrap">
                 <table className="history-table">

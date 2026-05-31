@@ -91,7 +91,7 @@ const CharacterSelection = ({ studentId, onCharacterSelected }) => {
           <span>WIZARDFRAC</span>
         </div>
         <div className="nav-menu">
-          <button className="menu-btn">MENU</button>
+          <button type="button" className="menu-btn">Menu</button>
         </div>
       </div>
 

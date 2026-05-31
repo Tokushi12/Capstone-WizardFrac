@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './game-lobby.css';
 import IslandInterior from './IslandInterior';
+import GameMenuModal from '../components/GameMenuModal';
 
 const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart, onOpenDashboard, onEnterIslandInterior, onLeaveIslandInterior, onLogout }) => {
   const [gameProgress, setGameProgress] = useState(null);
@@ -218,52 +219,32 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
       </div>
 
       {showMenu && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.75)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          zIndex: 1000,
-        }}
-          onClick={() => setShowMenu(false)}
-        >
-          <div style={{
-            background: '#fff', borderRadius: '16px', padding: '48px 56px',
-            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-          }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 style={{ margin: 0, fontSize: '28px', color: '#1f2937' }}>Menu</h2>
+        <GameMenuModal title="Menu" onClose={() => setShowMenu(false)}>
+          <div className="wizard-menu-info">
             {studentNickname && (
-              <p style={{ margin: 0, fontSize: '16px', color: '#555' }}>
+              <p className="wizard-menu-info-row">
                 <strong>Username:</strong> {studentNickname}
               </p>
             )}
             {character && (
-              <p style={{ margin: 0, fontSize: '16px', color: '#555' }}>
+              <p className="wizard-menu-info-row">
                 <strong>Character:</strong> {character.name}
               </p>
             )}
-            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-              <button style={{
-                padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
-                background: '#e5e7eb', color: '#374151',
-                border: 'none', borderRadius: '10px', cursor: 'pointer',
-              }}>
-                Settings
-              </button>
-              <button style={{
-                padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
-                background: '#8b5cf6', color: '#fff',
-                border: 'none', borderRadius: '10px', cursor: 'pointer',
-              }}
-                onClick={onLogout}
-              >
-                Logout
-              </button>
-            </div>
           </div>
-        </div>
+          <div className="wizard-menu-actions">
+            <button type="button" className="wizard-menu-btn wizard-menu-btn-secondary">
+              Settings
+            </button>
+            <button
+              type="button"
+              className="wizard-menu-btn wizard-menu-btn-primary"
+              onClick={onLogout}
+            >
+              Logout
+            </button>
+          </div>
+        </GameMenuModal>
       )}
     </div>
   );

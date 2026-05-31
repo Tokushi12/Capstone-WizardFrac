@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ButterflyDiagramCanvas from '../components/ButterflyDiagramCanvas';
 import ButterflyStepPanel from '../components/ButterflyStepPanel';
 import MixedButterflyTutorial from '../components/MixedButterflyTutorial';
+import GameMenuModal from '../components/GameMenuModal';
 import './game.css';
 
 const FractionBox = ({ whole, num, den }) => (
@@ -357,6 +358,7 @@ const HybridIslandGame = ({
   const [currentHint,    setCurrentHint]    = useState('');
   const [enemyAttacking, setEnemyAttacking] = useState(false);
   const [gameOver,       setGameOver]       = useState(false);
+  const [showExitModal,  setShowExitModal]  = useState(false);
   const [hasSeenMixedTutorial, setHasSeenMixedTutorial] = useState(false);
 
   const [problem,          setProblem]          = useState(() => generateProblem());
@@ -419,18 +421,26 @@ const HybridIslandGame = ({
     } catch (err) { console.error('Error saving spell attempt:', err); }
   };
 
-  const saveGameEnd = async (isWon) => {
+  const saveGameEnd = async (status, isWon) => {
     try {
       const res = await fetch(
         `http://localhost:8080/api/game-progress/end-session/${gameSession.sessionId}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: isWon ? 'COMPLETED' : 'FAILED', isWon, hintsUsed: 0 }) }
+          body: JSON.stringify({ status, isWon, hintsUsed: 0 }) }
       );
       if (!res.ok) {
         const body = await res.text();
         console.error('saveGameEnd failed:', res.status, body);
       }
     } catch (err) { console.error('Error saving game end:', err); }
+  };
+
+  const handleExitGame = () => setShowExitModal(true);
+
+  const confirmExit = async () => {
+    setShowExitModal(false);
+    await saveGameEnd('PAUSED', false);
+    onExitToLobby();
   };
 
   // ── forge complete ──
@@ -471,7 +481,7 @@ const HybridIslandGame = ({
     });
 
     if (newEnemyLives <= 0) {
-      await saveGameEnd(true);
+      await saveGameEnd('COMPLETED', true);
       setTimeout(() => onGameEnd({ isWon: true, score: newScore }), 1500);
       return;
     }
@@ -487,7 +497,7 @@ const HybridIslandGame = ({
     }, 1500);
   };
 
-  const handleWrongAnswer = (hint, submittedValue, errorType) => {
+  const handleWrongAnswer = async (hint, submittedValue, errorType) => {
     const newLives = playerHealth - 1;
     setPlayerHealth(newLives);
     setStreak(0);
@@ -507,7 +517,7 @@ const HybridIslandGame = ({
     });
 
     if (newLives <= 0) {
-      saveGameEnd(false);
+      await saveGameEnd('FAILED', false);
       setTimeout(() => setGameOver(true), 800);
     } else {
       setTimeout(() => { setEnemyAttacking(false); setFeedback(''); setFeedbackType(''); }, 4000);
@@ -545,7 +555,7 @@ const HybridIslandGame = ({
           </div>
           <button
             style={{ padding: '8px 20px', background: '#bbb', border: '2px solid #888', borderRadius: '6px', cursor: 'pointer' }}
-            onClick={onExitToLobby}
+            onClick={handleExitGame}
           >
             Menu
           </button>
@@ -691,6 +701,24 @@ const HybridIslandGame = ({
             </button>
           </div>
         </div>
+      )}
+
+      {showExitModal && (
+        <GameMenuModal
+          title="Exit Game?"
+          message="Your progress will be saved."
+          icon="⚠️"
+          onClose={() => setShowExitModal(false)}
+        >
+          <div className="wizard-menu-actions">
+            <button type="button" className="wizard-menu-btn wizard-menu-btn-primary" onClick={confirmExit}>
+              Yes, Exit
+            </button>
+            <button type="button" className="wizard-menu-btn wizard-menu-btn-secondary" onClick={() => setShowExitModal(false)}>
+              Cancel
+            </button>
+          </div>
+        </GameMenuModal>
       )}
     </div>
   );

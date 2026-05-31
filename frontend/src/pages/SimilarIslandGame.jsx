@@ -3,6 +3,7 @@ import './game.css';
 import DrawingCanvas from '../components/DrawingCanvas';
 import FractionPattern from '../components/FractionPattern';
 import SimilarFractionTutorial from '../components/SimilarFractionTutorial';
+import GameMenuModal from '../components/GameMenuModal';
 import '../components/components.css';
 
 const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, gameSession, onGameEnd, onExitToLobby }) => {
@@ -161,7 +162,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     setDenAnimating(true);
   };
 
-  const handleWrongAnswer = (hint, submittedValue) => {
+  const handleWrongAnswer = async (hint, submittedValue) => {
     const newLives = lives - 1;
     setLives(newLives);
     setEnemyAttacking(true);
@@ -196,7 +197,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     saveSpellAttempt(attempt);
 
     if (newLives <= 0) {
-      saveGameEnd('FAILED', false);
+      await saveGameEnd('FAILED', false);
       setTimeout(() => setGameOver(true), 800);
     }
   };
@@ -239,6 +240,18 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       }
     } catch (err) {
       console.error('Error saving game end:', err);
+    }
+  };
+
+  const recordHintUsed = async () => {
+    sessionHintsUsed.current += 1;
+    try {
+      await fetch(
+        `http://localhost:8080/api/game-progress/hint-used/${gameSession.sessionId}`,
+        { method: 'POST' }
+      );
+    } catch (err) {
+      console.error('Error recording hint:', err);
     }
   };
 
@@ -985,7 +998,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                   {((!hintUsed && !checkPhase) || (!phase2HintUsed && finalAnswerVisible)) && (
                     <button
                       onClick={() => finalAnswerVisible
-                        ? (sessionHintsUsed.current += 1, setPhase2HintUsed(true), setFormulaVisible(true))
+                        ? (recordHintUsed(), setPhase2HintUsed(true), setFormulaVisible(true))
                         : setShowHintConfirm(true)
                       }
                       style={{
@@ -1379,7 +1392,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             <p style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>Are you sure you want a hint?</p>
             <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>Using a hint removes points for this problem.</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button onClick={() => { sessionHintsUsed.current += 1; setHintUsed(true); setFormulaVisible(true); setShowHintConfirm(false); }}
+              <button onClick={() => { recordHintUsed(); setHintUsed(true); setFormulaVisible(true); setShowHintConfirm(false); }}
                 style={{ padding: '10px 24px', fontWeight: 700, background: '#f59e0b', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#fff' }}>
                 Yes, show hint
               </button>
@@ -1434,46 +1447,29 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       )}
 
       {showExitModal && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.75)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{
-            background: '#fff', borderRadius: '16px', padding: '48px 56px',
-            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-          }}>
-            <div style={{ fontSize: '48px' }}>⚠️</div>
-            <h2 style={{ margin: 0, fontSize: '28px', color: '#1f2937' }}>Exit Game?</h2>
-            <p style={{ margin: 0, fontSize: '16px', color: '#555' }}>
-              Your progress will be saved.
-            </p>
-            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-              <button
-                style={{
-                  padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
-                  background: '#8b5cf6', color: '#fff',
-                  border: 'none', borderRadius: '10px', cursor: 'pointer',
-                }}
-                onClick={confirmExit}
-              >
-                Yes, Exit
-              </button>
-              <button
-                style={{
-                  padding: '12px 32px', fontSize: '16px', fontWeight: 'bold',
-                  background: '#e5e7eb', color: '#374151',
-                  border: 'none', borderRadius: '10px', cursor: 'pointer',
-                }}
-                onClick={() => setShowExitModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
+        <GameMenuModal
+          title="Exit Game?"
+          message="Your progress will be saved."
+          icon="⚠️"
+          onClose={() => setShowExitModal(false)}
+        >
+          <div className="wizard-menu-actions">
+            <button
+              type="button"
+              className="wizard-menu-btn wizard-menu-btn-primary"
+              onClick={confirmExit}
+            >
+              Yes, Exit
+            </button>
+            <button
+              type="button"
+              className="wizard-menu-btn wizard-menu-btn-secondary"
+              onClick={() => setShowExitModal(false)}
+            >
+              Cancel
+            </button>
           </div>
-        </div>
+        </GameMenuModal>
       )}
     </div>
   );
