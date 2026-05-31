@@ -4,6 +4,7 @@ import com.WizardFrac.WizardFrac.entity.*;
 import com.WizardFrac.WizardFrac.repository.*;
 import com.WizardFrac.WizardFrac.dto.SpellAttemptDTO;
 import com.WizardFrac.WizardFrac.dto.DiagnosticsDTO;
+import com.WizardFrac.WizardFrac.dto.GameplayHistoryDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,7 @@ public class GameProgressService {
 
     // End game session and save full session record (UC-1.2 - session end saving)
     @Transactional
-    public void endGameSession(Long gameSessionId, String status, boolean isWon) {
+    public void endGameSession(Long gameSessionId, String status, boolean isWon, Integer hintsUsed) {
         Optional<GameSession> sessionOpt = gameSessionRepository.findById(gameSessionId);
         if (sessionOpt.isEmpty()) {
             throw new RuntimeException("Game session not found");
@@ -75,6 +76,9 @@ public class GameProgressService {
         GameSession session = sessionOpt.get();
         session.setStatus(status); // COMPLETED, FAILED, etc.
         session.setEndedAt(LocalDateTime.now());
+        if (hintsUsed != null) {
+            session.setHintsUsed(hintsUsed);
+        }
 
         // Serialize session data to JSON (all spell attempts)
         List<SpellAttempt> attempts = spellAttemptRepository.findByGameSessionIdOrderByTimestamp(gameSessionId);
@@ -171,8 +175,46 @@ public class GameProgressService {
     }
 
     // Get session history
-    public List<GameSession> getSessionHistory(Long studentId) {
-        return gameSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId);
+    public List<GameplayHistoryDTO> getSessionHistory(Long studentId) {
+        List<GameSession> sessions = gameSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId);
+        return sessions.stream()
+            .filter(session -> session.getEndedAt() != null)
+            .map(this::toGameplayHistoryDTO)
+            .collect(Collectors.toList());
+    }
+
+    private GameplayHistoryDTO toGameplayHistoryDTO(GameSession session) {
+        List<SpellAttempt> attempts = spellAttemptRepository
+            .findByGameSessionIdOrderByTimestamp(session.getId());
+        int correctAnswers = (int) attempts.stream()
+            .filter(SpellAttempt::getIsCorrect)
+            .count();
+
+        int hints = session.getHintsUsed() != null ? session.getHintsUsed() : 0;
+        String nickname = session.getPlayerNickname();
+        if (nickname == null && session.getStudent() != null) {
+            nickname = session.getStudent().getNickname();
+        }
+
+        return new GameplayHistoryDTO(
+            nickname,
+            formatIslandName(session.getIslandType()),
+            session.getStageNumber(),
+            hints,
+            hints > 0 ? String.valueOf(hints) : "Not using hint",
+            session.getScore(),
+            correctAnswers
+        );
+    }
+
+    private String formatIslandName(String islandType) {
+        if (islandType == null) return "Unknown";
+        return switch (islandType.toLowerCase()) {
+            case "similar" -> "Similar";
+            case "dissimilar" -> "Dissimilar";
+            case "hybrid" -> "Hybrid";
+            default -> islandType;
+        };
     }
 
     // Get diagnostics data for student
@@ -253,7 +295,12 @@ public class GameProgressService {
             streakHistory = streakHistory.subList(0, 10);
         }
 
-        return new DiagnosticsDTO(competencies, summary, streakHistory);
+        List<GameplayHistoryDTO> gameHistory = sessions.stream()
+            .filter(session -> session.getEndedAt() != null)
+            .map(this::toGameplayHistoryDTO)
+            .collect(Collectors.toList());
+
+        return new DiagnosticsDTO(competencies, summary, streakHistory, gameHistory);
     }
 
     private String getMasteryLevel(double accuracy) {

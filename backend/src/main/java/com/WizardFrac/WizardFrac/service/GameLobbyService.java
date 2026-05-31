@@ -47,6 +47,7 @@ public class GameLobbyService {
         Student student = studentOpt.get();
         GameSession session = new GameSession(student, islandType, stageNumber);
         session.setEnemyHealth(100); // Initial enemy health
+        session.setPlayerNickname(student.getNickname());
         GameSession savedSession = gameSessionRepository.save(session);
 
         // Generate first problem (placeholder - actual implementation would generate real problems)

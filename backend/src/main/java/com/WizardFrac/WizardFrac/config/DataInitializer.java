@@ -6,12 +6,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 public class DataInitializer {
 
     @Autowired
     private CharacterRepository characterRepository;
+
+    @Bean
+    public CommandLineRunner migrateGameSessionColumns(JdbcTemplate jdbcTemplate) {
+        return args -> {
+            jdbcTemplate.execute(
+                "ALTER TABLE game_sessions ADD COLUMN IF NOT EXISTS hints_used INTEGER DEFAULT 0"
+            );
+            jdbcTemplate.execute(
+                "UPDATE game_sessions SET hints_used = 0 WHERE hints_used IS NULL"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE game_sessions ADD COLUMN IF NOT EXISTS player_nickname VARCHAR(255)"
+            );
+        };
+    }
 
     // Each entry: name, description, rarity, imageUrl, initialHealth
     private static final Object[][] CHARACTERS = {

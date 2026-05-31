@@ -43,8 +43,11 @@ public class GameProgressController {
         try {
             String status = (String) request.get("status"); // COMPLETED, FAILED, PAUSED
             Boolean isWon = (Boolean) request.get("isWon");
+            Integer hintsUsed = request.get("hintsUsed") != null
+                ? ((Number) request.get("hintsUsed")).intValue()
+                : 0;
 
-            gameProgressService.endGameSession(gameSessionId, status, isWon != null ? isWon : false);
+            gameProgressService.endGameSession(gameSessionId, status, isWon != null ? isWon : false, hintsUsed);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Game session saved successfully");

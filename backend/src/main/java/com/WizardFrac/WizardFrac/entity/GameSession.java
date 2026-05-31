@@ -47,6 +47,12 @@ public class GameSession {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String sessionDataJson;
 
+    @Column(nullable = true)
+    private String playerNickname;
+
+    @Column(nullable = true)
+    private Integer hintsUsed = 0;
+
     public GameSession() {
         this.startedAt = LocalDateTime.now();
         this.status = "ACTIVE";
@@ -166,5 +172,21 @@ public class GameSession {
 
     public void setSessionDataJson(String sessionDataJson) {
         this.sessionDataJson = sessionDataJson;
+    }
+
+    public String getPlayerNickname() {
+        return playerNickname;
+    }
+
+    public void setPlayerNickname(String playerNickname) {
+        this.playerNickname = playerNickname;
+    }
+
+    public Integer getHintsUsed() {
+        return hintsUsed;
+    }
+
+    public void setHintsUsed(Integer hintsUsed) {
+        this.hintsUsed = hintsUsed;
     }
 }

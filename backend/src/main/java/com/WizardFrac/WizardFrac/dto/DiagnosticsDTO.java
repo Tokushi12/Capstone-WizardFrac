@@ -7,13 +7,16 @@ public class DiagnosticsDTO {
     private List<CompetencyMasteryDTO> competencies;
     private SummaryDTO summary;
     private List<StreakHistoryDTO> streakHistory;
+    private List<GameplayHistoryDTO> gameHistory;
 
     public DiagnosticsDTO() {}
 
-    public DiagnosticsDTO(List<CompetencyMasteryDTO> competencies, SummaryDTO summary, List<StreakHistoryDTO> streakHistory) {
+    public DiagnosticsDTO(List<CompetencyMasteryDTO> competencies, SummaryDTO summary,
+                          List<StreakHistoryDTO> streakHistory, List<GameplayHistoryDTO> gameHistory) {
         this.competencies = competencies;
         this.summary = summary;
         this.streakHistory = streakHistory;
+        this.gameHistory = gameHistory;
     }
 
     public List<CompetencyMasteryDTO> getCompetencies() {
@@ -38,6 +41,14 @@ public class DiagnosticsDTO {
 
     public void setStreakHistory(List<StreakHistoryDTO> streakHistory) {
         this.streakHistory = streakHistory;
+    }
+
+    public List<GameplayHistoryDTO> getGameHistory() {
+        return gameHistory;
+    }
+
+    public void setGameHistory(List<GameplayHistoryDTO> gameHistory) {
+        this.gameHistory = gameHistory;
     }
 
     public static class CompetencyMasteryDTO {
