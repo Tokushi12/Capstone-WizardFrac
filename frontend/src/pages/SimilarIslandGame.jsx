@@ -65,6 +65,20 @@ const buildProblemHybrid = (level = 1) => {
   return `${w1} ${n1}/${d1} ${op} ${w2} ${n2}/${d2} = ?`;
 };
 
+// Detects frame count from a horizontal sprite sheet.
+// Square frames (most common): width is an exact multiple of height → frame count = width / height.
+// Non-square: find the smallest divisor whose frame aspect ratio is reasonable (0.5–2).
+const detectFrameCount = (width, height) => {
+  if (width % height === 0) return width / height;
+  for (const n of [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16]) {
+    if (width % n === 0) {
+      const ratio = (width / n) / height;
+      if (ratio >= 0.5 && ratio <= 2) return n;
+    }
+  }
+  return Math.max(1, Math.round(width / height));
+};
+
 const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, gameSession, onGameEnd, onExitToLobby }) => {
   const [currentProblem, setCurrentProblem] = useState(() => buildProblem(gameSession.level));
   const [mechanicType, setMechanicType] = useState(gameSession.mechanicType);
@@ -111,7 +125,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     if (!rectWrapperRef.current) return;
     const obs = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
-      const s = Math.min(1, width / 400, height / 440);
+      const s = Math.max(0.1, Math.min(1, width / 400, (height - 50) / 440));
       rectScaleRef.current = s;
       setRectScale(s);
     });
@@ -162,6 +176,20 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   const analyserRef  = useRef(null);
   const pulseRafRef  = useRef(null);
   const [pulse, setPulse] = useState(0); // 0-1 bass intensity
+  const [wizardAnim, setWizardAnim] = useState('idle');
+  const wizardAnimTimerRef = useRef(null);
+  const [enemyAnim, setEnemyAnim] = useState('idle');
+  const enemyAnimTimerRef = useRef(null);
+  const [enemySpriteInfo, setEnemySpriteInfo] = useState({
+    idle:   { frames: 4, frameW: 280, frameH: 280, missing: false },
+    attack: { frames: 4, frameW: 280, frameH: 280, missing: false },
+    hit:    { frames: 4, frameW: 280, frameH: 280, missing: false },
+  });
+  const enemySpriteInfoRef = useRef({
+    idle:   { frames: 4, frameW: 280, frameH: 280, missing: false },
+    attack: { frames: 4, frameW: 280, frameH: 280, missing: false },
+    hit:    { frames: 4, frameW: 280, frameH: 280, missing: false },
+  });
 
   const playOST = (src) => {
     if (ostRef.current) { ostRef.current.pause(); ostRef.current.src = ''; }
@@ -289,6 +317,45 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
   useEffect(() => {
     loadEnemyData();
   }, [gameSession.level]);
+
+  // Load each PNG sprite sheet, auto-detect frame count, and compute proportional display size
+  useEffect(() => {
+    if (!enemyData) return;
+    const MAX = 280;
+    const reset = { idle: { frames: 4, displayW: MAX, displayH: MAX, missing: false }, attack: { frames: 4, displayW: MAX, displayH: MAX, missing: false }, hit: { frames: 4, displayW: MAX, displayH: MAX, missing: false } };
+    enemySpriteInfoRef.current = reset;
+    setEnemySpriteInfo(reset);
+
+    ['idle', 'attack', 'hit'].forEach(anim => {
+      const img = new Image();
+      img.onload = () => {
+        const frames    = detectFrameCount(img.naturalWidth, img.naturalHeight);
+        const natFrameW = img.naturalWidth / frames;
+        const natFrameH = img.naturalHeight;
+        // Contain: scale uniformly so the frame fits inside MAX×MAX without distortion
+        const scale  = Math.min(MAX / natFrameW, MAX / natFrameH);
+        const frameW = Math.round(natFrameW * scale);
+        const frameH = Math.round(natFrameH * scale);
+        const info = { frames, frameW, frameH, missing: false };
+        enemySpriteInfoRef.current = { ...enemySpriteInfoRef.current, [anim]: info };
+        setEnemySpriteInfo(prev => ({ ...prev, [anim]: info }));
+      };
+      img.onerror = () => {
+        const info = { frames: 4, frameW: MAX, frameH: MAX, missing: true };
+        enemySpriteInfoRef.current = { ...enemySpriteInfoRef.current, [anim]: info };
+        setEnemySpriteInfo(prev => ({ ...prev, [anim]: info }));
+      };
+      img.src = `/enemyAssets/similarIsland/${enemyData.name}/${anim}.png`;
+    });
+  }, [enemyData?.name]);
+
+  useEffect(() => {
+    if (enemyAttacking) playEnemyAnim('attack');
+  }, [enemyAttacking]);
+
+  useEffect(() => {
+    if (enemyFlashing) playEnemyAnim('hit');
+  }, [enemyFlashing]);
 
   const triggerDefeat = (target, onComplete) => {
     setDefeatTarget(target);
@@ -513,6 +580,23 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
 
   const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
 
+  const playWizardAnim = (anim) => {
+    const isWitch = selectedCharacter?.name?.toLowerCase().includes('girl');
+    const frameCount = isWitch
+      ? { attack1: 10, attack2: 4, hurt: 3 }
+      : { attack1: 7,  attack2: 9, hurt: 4 };
+    if (wizardAnimTimerRef.current) clearTimeout(wizardAnimTimerRef.current);
+    setWizardAnim(anim);
+    wizardAnimTimerRef.current = setTimeout(() => setWizardAnim('idle'), (frameCount[anim] / 10) * 1000);
+  };
+
+  const playEnemyAnim = (anim) => {
+    if (enemyAnimTimerRef.current) clearTimeout(enemyAnimTimerRef.current);
+    setEnemyAnim(anim);
+    const frames = enemySpriteInfoRef.current[anim]?.frames || 4;
+    enemyAnimTimerRef.current = setTimeout(() => setEnemyAnim('idle'), (frames / 10) * 1000);
+  };
+
   const launchFireball = (onHit) => {
     const pBox = playerBoxRef.current || playerRef.current;
     const eBox = enemyBoxRef.current  || enemyRef.current;
@@ -623,6 +707,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       setTimeout(() => setEnemyAttacking(false), 1000);
       setPlayerFlashing(true);
       setTimeout(() => setPlayerFlashing(false), 500);
+      playWizardAnim('hurt');
     }
 
     if (newLives <= 0) {
@@ -795,15 +880,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
     <div
       className="wireframe-game-container"
       style={{
-        backgroundImage: 'url(/InMatchUIElements/SimilarIsland/ForrestCombatBackground.png)',
-        backgroundSize: 'contain',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        animation: bgShift === 'right'         ? 'bgShiftRight  0.6s ease-out forwards'
-                 : bgShift === 'left'          ? 'bgShiftLeft   0.6s ease-out forwards'
-                 : bgShift === 'return-right'  ? 'bgReturnRight 0.7s ease-in-out forwards'
-                 : bgShift === 'return-left'   ? 'bgReturnLeft  0.7s ease-in-out forwards'
-                 : 'none',
+        position: 'relative',
         height: '100svh',
         overflow: 'hidden',
         padding: '20px 20px 0',
@@ -815,7 +892,24 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         boxSizing: 'border-box',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', padding: '8px 0', gap: '10px' }}>
+      {/* Bobbing background layer — outer div bobs (transform), inner div shifts position on answer */}
+      <div style={{ position: 'absolute', inset: '-20px', animation: 'bgBob 12s ease-in-out infinite', zIndex: 0, pointerEvents: 'none' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'url(/InMatchUIElements/SimilarIsland/ForrestCombatBackground.png)',
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            animation: bgShift === 'right'        ? 'bgShiftRight  0.6s ease-out forwards'
+                     : bgShift === 'left'         ? 'bgShiftLeft   0.6s ease-out forwards'
+                     : bgShift === 'return-right' ? 'bgReturnRight 0.7s ease-in-out forwards'
+                     : bgShift === 'return-left'  ? 'bgReturnLeft  0.7s ease-in-out forwards'
+                     : 'none',
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', padding: '8px 0', gap: '10px', position: 'relative', zIndex: 1 }}>
 
         {/* Stats — top left, same border as problem display */}
         <div style={{ position: 'relative', border: '4px solid #703737', background: '#e8d5b4', padding: '8px 16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -908,17 +1002,6 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         }}
       >
         <div
-          className="wireframe-top-hearts"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            paddingTop: '32px',
-          }}
-        >
-        </div>
-
-        <div
           className="wireframe-main-battle"
           style={{
             display: 'flex',
@@ -926,7 +1009,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             alignItems: 'stretch',
             flex: 1,
             minHeight: 0,
-            padding: '20px 0 0',
+            padding: '10px 0 0',
             gap: '0',
             overflow: 'hidden',
           }}
@@ -964,16 +1047,44 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                 height: '100%',
                 background: 'transparent',
               }}></div>
-              <img
-                src={selectedCharacter?.name?.toLowerCase().includes('girl') ? '/Female.png' : '/Male.png'}
-                alt="Player"
-                style={{ position: 'relative', zIndex: 1, width: '88%', height: '88%', objectFit: 'contain',
-                  animation: defeatTarget === 'player' && !defeatFading
-                    ? 'defeatFlash 0.25s ease-in-out infinite'
-                    : playerFlashing ? 'enemyFlash 0.5s ease-out, damageShake 0.5s ease-out' : 'none',
-                  opacity: defeatTarget === 'player' && defeatFading ? 0 : 1,
-                  transition: defeatTarget === 'player' && defeatFading ? 'opacity 1.1s ease-out' : 'none' }}
-              />
+              {(() => {
+                const isWitch = selectedCharacter?.name?.toLowerCase().includes('girl');
+                const charKey = isWitch ? 'witch' : 'wizard';
+                const FRAMES = isWitch
+                  ? { idle: 7, attack1: 10, attack2: 4, hurt: 3 }
+                  : { idle: 8, attack1: 7,  attack2: 9, hurt: 4 };
+                const n = FRAMES[wizardAnim];
+                const DISP = 420;
+                const kf = `${charKey}_${wizardAnim}`;
+                const sprAnim = `${kf} ${(n / 10).toFixed(2)}s steps(${n}) ${wizardAnim === 'idle' ? 'infinite' : '1 forwards'}`;
+                const combined = defeatTarget === 'player' && !defeatFading
+                  ? `${sprAnim}, defeatFlash 0.25s ease-in-out infinite`
+                  : playerFlashing
+                  ? `${sprAnim}, enemyFlash 0.5s ease-out, damageShake 0.5s ease-out`
+                  : sprAnim;
+                const capAnim = wizardAnim[0].toUpperCase() + wizardAnim.slice(1);
+                return (
+                  <>
+                    <style>{`@keyframes ${kf} { to { background-position-x: -${n * DISP}px; } }`}</style>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 40,
+                      left: `calc(50% - ${DISP / 2}px + ${isWitch ? 30 : 0}px)`,
+                      zIndex: 1,
+                      width: DISP, height: DISP,
+                      backgroundImage: `url(/PlayerAssets/${charKey}/${charKey}${capAnim}.png)`,
+                      backgroundSize: `${n * DISP}px ${DISP}px`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: '0px 0px',
+                      animation: combined,
+                      imageRendering: 'pixelated',
+                      opacity: defeatTarget === 'player' && defeatFading ? 0 : 1,
+                      transition: defeatTarget === 'player' && defeatFading ? 'opacity 1.1s ease-out' : 'none',
+                    }} />
+                  </>
+                );
+              })()
+              }
 
               {/* Sparkle particles at bottom of character box */}
               {circleDetected && interactableVisible && (
@@ -1412,6 +1523,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                       setBgShift(dir); lastBgShiftRef.current = dir;
                       if (correct) {
                         new Audio('/VoiceLines/castSuccess.wav').play().catch(() => {});
+                        playWizardAnim(Math.random() < 0.5 ? 'attack1' : 'attack2');
                         setTimeout(() => launchFireball(() => {
                           handleAnswerSubmit(answer);
                         }), 500);
@@ -1712,22 +1824,52 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                   75%       { filter: brightness(3) saturate(0); }
                 }
               `}</style>
-              <img
-                src="/enemy1.png"
-                alt="Enemy"
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  width: '88%',
-                  height: '88%',
-                  objectFit: 'contain',
-                  animation: defeatTarget === 'enemy' && !defeatFading
-                    ? 'defeatFlash 0.25s ease-in-out infinite'
-                    : enemyFlashing ? 'enemyFlash 0.5s ease-out, damageShake 0.5s ease-out' : 'none',
-                  opacity: defeatTarget === 'enemy' && defeatFading ? 0 : 1,
-                  transition: defeatTarget === 'enemy' && defeatFading ? 'opacity 1.1s ease-out' : 'none',
-                }}
-              />
+              {(() => {
+                const info = enemySpriteInfo[enemyAnim];
+                const { frames, frameW, frameH } = info;
+                const BOX = 280;
+                const safeName = (enemyData?.name || 'unknown').replace(/\s+/g, '_');
+                const kf = `enemy_${safeName}_${enemyAnim}`;
+                const sprAnim = `${kf} ${(frames / 10).toFixed(2)}s steps(${frames}) ${enemyAnim === 'idle' ? 'infinite' : '1 forwards'}`;
+                const combined = defeatTarget === 'enemy' && !defeatFading
+                  ? `${sprAnim}, defeatFlash 0.25s ease-in-out infinite`
+                  : enemyFlashing
+                  ? `${sprAnim}, enemyFlash 0.5s ease-out, damageShake 0.5s ease-out`
+                  : sprAnim;
+                if (info.missing) return (
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: `calc(50% - ${BOX / 2}px)`, zIndex: 1,
+                    width: BOX, height: BOX, border: '3px dashed #f87171', background: 'rgba(0,0,0,0.75)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    fontFamily: '"Press Start 2P", monospace', color: '#f87171',
+                  }}>
+                    <span style={{ fontSize: 36 }}>???</span>
+                    <span style={{ fontSize: 9, textAlign: 'center', lineHeight: 1.6 }}>Missing<br/>Sprite</span>
+                  </div>
+                );
+                return (
+                  <>
+                    <style>{`@keyframes ${kf} { to { background-position-x: -${frames * frameW}px; } }`}</style>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: `calc(50% - ${frameW / 2}px)`,
+                      zIndex: 1,
+                      width: frameW,
+                      height: frameH,
+                      transform: 'scaleX(-1)',
+                      backgroundImage: `url(/enemyAssets/similarIsland/${enemyData?.name}/${enemyAnim}.png)`,
+                      backgroundSize: `${frames * frameW}px ${frameH}px`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: '0px 0px',
+                      animation: combined,
+                      imageRendering: 'pixelated',
+                      opacity: defeatTarget === 'enemy' && defeatFading ? 0 : 1,
+                      transition: defeatTarget === 'enemy' && defeatFading ? 'opacity 1.1s ease-out' : 'none',
+                    }} />
+                  </>
+                );
+              })()}
               {/* Platform at bottom of enemy box, above Enemy label */}
               <img
                 src="/InMatchUIElements/SimilarIsland/SimilarIslandPlatform.png"
