@@ -2,7 +2,7 @@
 similarIsland
 ---
 type:normal
-name:Critter
+name:Slime
 level:1
 hp:10
 +++
