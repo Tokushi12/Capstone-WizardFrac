@@ -7,3 +7,11 @@ level:1
 hp:10
 +++
 
+===
+similarIsland
+---
+type:boss
+name:Elai
+level:2
+hp:12
++++
