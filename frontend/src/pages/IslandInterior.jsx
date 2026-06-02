@@ -196,62 +196,83 @@ const IslandInterior = ({ island, maxStage = 0, onSelectLevel, onBack }) => {
         zIndex: 2,
       }}>
 
-        {/* WalkableArea island PNG — larger than the square so edges aren't clipped */}
-        {overlay && (
-          <img
-            src={overlay}
-            alt="island"
-            style={{
+        {/* Island + level markers float together */}
+        <div className="island-float-wrapper">
+          {/* WalkableArea island PNG — larger than the square so edges aren't clipped */}
+          {overlay && (
+            <img
+              src={overlay}
+              alt="island"
+              className="walkable-area-float"
+            />
+          )}
+
+          {/* Enemies */}
+          {enemies.map(enemy => {
+            const done   = isCompleted(enemy.level);
+            const locked = isLocked(enemy.level);
+            const boss   = enemy.level === 6;
+            const near   = nearEnemy?.level === enemy.level;
+            const color  = enemyColor(enemy.level, done, locked);
+
+            return (
+              <div
+                key={enemy.level}
+                style={{
+                  position: 'absolute',
+                  left: enemy.x - E_RAD,
+                  top:  enemy.y - E_RAD,
+                  width: E_RAD * 2, height: E_RAD * 2,
+                  borderRadius: '50%',
+                  background: color,
+                  border: `3px solid ${near ? '#fff' : 'rgba(255,255,255,0.35)'}`,
+                  boxShadow: near ? `0 0 16px ${color}, 0 0 32px ${color}` : '0 2px 8px rgba(0,0,0,0.5)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: locked ? 16 : 13, fontWeight: 800, color: '#fff',
+                  cursor: 'default',
+                  opacity: locked ? 0.55 : 1,
+                  transition: 'box-shadow 0.15s, border-color 0.15s',
+                  userSelect: 'none',
+                }}
+              >
+                {!locked && boss && (
+                  <span style={{
+                    position: 'absolute', top: -24,
+                    fontSize: 20,
+                    filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))',
+                  }}>
+                    👑
+                  </span>
+                )}
+                {locked ? '🔒' : done ? '✓' : boss ? '!' : enemy.level}
+              </div>
+            );
+          })}
+
+          {/* Interact prompt above nearby enemy */}
+          {nearEnemy && (
+            <div style={{
               position: 'absolute',
-              top: '-100%', left: '-100%',
-              width: '300%', height: '300%',
-              objectFit: 'contain',
+              left: nearEnemy.x - 64,
+              top:  nearEnemy.y - E_RAD - 48,
+              width: 128,
+              background: 'rgba(0,0,0,0.8)',
+              color: '#fff',
+              fontSize: 11, fontWeight: 700,
+              textAlign: 'center',
+              borderRadius: 6, padding: '4px 8px',
               pointerEvents: 'none',
-            }}
-          />
-        )}
-
-        {/* Enemies */}
-        {enemies.map(enemy => {
-          const done   = isCompleted(enemy.level);
-          const locked = isLocked(enemy.level);
-          const boss   = enemy.level === 6;
-          const near   = nearEnemy?.level === enemy.level;
-          const color  = enemyColor(enemy.level, done, locked);
-
-          return (
-            <div
-              key={enemy.level}
-              style={{
-                position: 'absolute',
-                left: enemy.x - E_RAD,
-                top:  enemy.y - E_RAD,
-                width: E_RAD * 2, height: E_RAD * 2,
-                borderRadius: '50%',
-                background: color,
-                border: `3px solid ${near ? '#fff' : 'rgba(255,255,255,0.35)'}`,
-                boxShadow: near ? `0 0 16px ${color}, 0 0 32px ${color}` : '0 2px 8px rgba(0,0,0,0.5)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: locked ? 16 : 13, fontWeight: 800, color: '#fff',
-                cursor: 'default',
-                opacity: locked ? 0.55 : 1,
-                transition: 'box-shadow 0.15s, border-color 0.15s',
-                userSelect: 'none',
-              }}
-            >
-              {!locked && boss && (
-                <span style={{
-                  position: 'absolute', top: -24,
-                  fontSize: 20,
-                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))',
-                }}>
-                  👑
-                </span>
-              )}
-              {locked ? '🔒' : done ? '✓' : boss ? '!' : enemy.level}
+              zIndex: 4,
+            }}>
+              {nearEnemy.level === 6 ? '👑 Boss Fight' : `Level ${nearEnemy.level}`}
+              <br />
+              {isCompleted(nearEnemy.level)
+                ? <span style={{ color: '#10b981' }}>Defeated</span>
+                : <span style={{ color: '#fbbf24' }}>Press Enter</span>
+              }
             </div>
-          );
-        })}
+          )}
+        </div>
 
         {/* Player */}
         <div style={{
@@ -266,30 +287,6 @@ const IslandInterior = ({ island, maxStage = 0, onSelectLevel, onBack }) => {
           zIndex: 3,
           pointerEvents: 'none',
         }} />
-
-        {/* Interact prompt above nearby enemy */}
-        {nearEnemy && (
-          <div style={{
-            position: 'absolute',
-            left: nearEnemy.x - 64,
-            top:  nearEnemy.y - E_RAD - 48,
-            width: 128,
-            background: 'rgba(0,0,0,0.8)',
-            color: '#fff',
-            fontSize: 11, fontWeight: 700,
-            textAlign: 'center',
-            borderRadius: 6, padding: '4px 8px',
-            pointerEvents: 'none',
-            zIndex: 4,
-          }}>
-            {nearEnemy.level === 6 ? '👑 Boss Fight' : `Level ${nearEnemy.level}`}
-            <br />
-            {isCompleted(nearEnemy.level)
-              ? <span style={{ color: '#10b981' }}>Defeated</span>
-              : <span style={{ color: '#fbbf24' }}>Press Enter</span>
-            }
-          </div>
-        )}
       </div>
     </div>
   );

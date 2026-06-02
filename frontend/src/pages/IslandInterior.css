@@ -1,3 +1,26 @@
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+.island-float-wrapper {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.walkable-area-float {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.22));
+}
+
 .island-interior {
   min-height: 100vh;
   background-size: cover;
