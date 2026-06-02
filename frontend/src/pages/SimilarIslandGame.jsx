@@ -1460,7 +1460,6 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                         }
                       }
                       // Wrong numerator — fail immediately, no Phase 2
-                      new Audio('/VoiceLines/castFailure.wav').play().catch(() => {});
                       const wrongAnswer = `${magicN}/${displayDen1}`;
                       setMagicN('');
                       setInteractableVisible(false);
