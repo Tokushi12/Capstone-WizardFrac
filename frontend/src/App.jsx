@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
+import MainPage from './pages/MainPage';
 import LandingPage from './pages/login';
 import CharacterSelection from './pages/character-selection';
 import GameLobby from './pages/game-lobby';
@@ -9,7 +10,7 @@ import HybridIslandGame from './pages/HybridIslandGame';
 import StudentDashboard from './pages/StudentDashboard';
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState('login'); // login, character-selection, game-lobby, game, game-end, dashboard
+  const [currentScreen, setCurrentScreen] = useState('main'); // main, login, character-selection, game-lobby, game, game-end, dashboard
   const [studentId, setStudentId] = useState(null);
   const [studentNickname, setStudentNickname] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
@@ -32,7 +33,7 @@ function App() {
   // Play on login/lobby screens, pause otherwise
   useEffect(() => {
     if (!audioRef.current) return;
-    const lobbyScreens = ['login', 'character-selection', 'game-lobby'];
+    const lobbyScreens = ['main', 'login', 'character-selection', 'game-lobby'];
     if (lobbyScreens.includes(currentScreen)) {
       audioRef.current.play().catch(() => {});
     } else {
@@ -136,7 +137,7 @@ function App() {
     setSelectedCharacter(null);
     setGameSession(null);
     setGameResult(null);
-    setCurrentScreen('login');
+    setCurrentScreen('main');
   };
 
   // Handle open dashboard
@@ -191,6 +192,10 @@ function App() {
 
   return (
     <div className="app">
+      {currentScreen === 'main' && (
+        <MainPage onStart={() => setCurrentScreen('login')} />
+      )}
+
       {currentScreen === 'login' && (
         <LandingPage onLoginSuccess={handleLogin} />
       )}
