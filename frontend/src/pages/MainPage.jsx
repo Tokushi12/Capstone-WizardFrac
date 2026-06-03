@@ -1,6 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import './MainPage.css';
 
+const FRAC_BUBBLES = [
+  { id: 1,  left: '4%',  delay: '0s',    dur: '13s', n1: '1', d1: '2', op: '+', n2: '1', d2: '4' },
+  { id: 2,  left: '15%', delay: '4s',    dur: '10s', n1: '3', d1: '5', op: '−', n2: '1', d2: '5' },
+  { id: 3,  left: '28%', delay: '7.5s',  dur: '15s', n1: '2', d1: '3', op: '+', n2: '1', d2: '6' },
+  { id: 4,  left: '43%', delay: '2s',    dur: '11s', n1: '5', d1: '8', op: '−', n2: '3', d2: '8' },
+  { id: 5,  left: '57%', delay: '9s',    dur: '12s', n1: '1', d1: '3', op: '+', n2: '1', d2: '2' },
+  { id: 6,  left: '70%', delay: '5s',    dur: '14s', n1: '7', d1: '8', op: '−', n2: '1', d2: '4' },
+  { id: 7,  left: '82%', delay: '1.5s',  dur: '16s', n1: '1', d1: '4', op: '+', n2: '1', d2: '4' },
+  { id: 8,  left: '91%', delay: '11s',   dur: '10s', n1: '2', d1: '3', op: '−', n2: '1', d2: '6' },
+  { id: 9,  left: '36%', delay: '14s',   dur: '13s', n1: '3', d1: '4', op: '+', n2: '1', d2: '8' },
+  { id: 10, left: '63%', delay: '17s',   dur: '11s', n1: '4', d1: '5', op: '−', n2: '2', d2: '5' },
+];
+
 const MainPage = ({ onStart }) => {
   const canvasRef = useRef(null);
   const frameRef  = useRef(null);
@@ -124,6 +137,28 @@ const MainPage = ({ onStart }) => {
   return (
     <div className="main-page">
       <canvas ref={canvasRef} className="main-canvas" />
+
+      <div className="frac-bubbles-layer" aria-hidden="true">
+        {FRAC_BUBBLES.map(b => (
+          <div
+            key={b.id}
+            className="frac-bubble"
+            style={{ left: b.left, animationDelay: b.delay, animationDuration: b.dur }}
+          >
+            <span className="fb-frac">
+              <span className="fb-n">{b.n1}</span>
+              <span className="fb-bar" />
+              <span className="fb-d">{b.d1}</span>
+            </span>
+            <span className="fb-op">{b.op}</span>
+            <span className="fb-frac">
+              <span className="fb-n">{b.n2}</span>
+              <span className="fb-bar" />
+              <span className="fb-d">{b.d2}</span>
+            </span>
+          </div>
+        ))}
+      </div>
 
       <div className="main-content">
         <div className="main-title-group">
