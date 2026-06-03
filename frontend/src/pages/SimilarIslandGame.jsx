@@ -1135,6 +1135,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             }}>
             <div
               key={currentProblem}
+              data-tutorial="problem-box"
               className="problem-fade-in"
               style={{
                 position: 'relative',
@@ -1219,6 +1220,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             >
             <div
               ref={circleContainerRef}
+              data-tutorial="interactable"
               style={{
                 width: '400px',
                 height: '440px',
@@ -1485,6 +1487,15 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                   </button>
                   ) : null}
                   {((!hintUsed && !checkPhase) || (!phase2HintUsed && finalAnswerVisible)) && (
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                      <div style={{
+                        fontSize:7, fontFamily:'"Press Start 2P", monospace',
+                        color:'#fbbf24', textAlign:'center', lineHeight:1.5,
+                        textShadow:'0 0 6px rgba(0,0,0,0.9)',
+                        whiteSpace:'nowrap',
+                      }}>
+                        ⚠ USING HINT WILL<br/>NOT BE RECORDED
+                      </div>
                     <button
                       onClick={() => finalAnswerVisible
                         ? (recordHintUsed(), setPhase2HintUsed(true), setFormulaVisible(true))
@@ -1515,6 +1526,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                       <div style={{position:'absolute',bottom:3,right:3,width:5,height:5,background:'#703737',pointerEvents:'none'}}/>
                       Hint
                     </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -2007,18 +2019,24 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
       )}
 
       {showHintConfirm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 }}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: '36px 44px', textAlign: 'center', maxWidth: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-            <p style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>Are you sure you want a hint?</p>
-            <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>Using a hint removes points for this problem.</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.82)', display:'flex', justifyContent:'center', alignItems:'center', zIndex:2000 }}>
+          <div style={{ position:'relative', background:'#e8d5b4', border:'4px solid #703737', padding:'32px 36px', textAlign:'center', width:360, fontFamily:'"Press Start 2P", monospace' }}>
+            {/* pixel corner decorations */}
+            <div style={{ position:'absolute', inset:6, border:'1px solid #703737', pointerEvents:'none' }} />
+            {[[-6,-6],[null,-6],[-6,null],[null,null]].map(([t,l],i)=>(
+              <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:12, height:12, background:'#703737', ...(t!==null?{top:t}:{bottom:-6}), ...(l!==null?{left:l}:{right:-6}) }}/>
+            ))}
+            <p style={{ fontSize:11, fontWeight:700, color:'#703737', margin:'0 0 16px', lineHeight:1.8 }}>USE A HINT?</p>
+            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c', fontWeight:900}}>reduce your score</span> for this problem.</p>
+            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c', fontWeight:900}}>not be fully recorded</span> in your progress.</p>
+            <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
               <button onClick={() => { recordHintUsed(); setHintUsed(true); setFormulaVisible(true); setShowHintConfirm(false); }}
-                style={{ padding: '10px 24px', fontWeight: 700, background: '#f59e0b', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#fff' }}>
-                Yes, show hint
+                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
+                YES, SHOW HINT
               </button>
               <button onClick={() => setShowHintConfirm(false)}
-                style={{ padding: '10px 24px', fontWeight: 700, background: '#e5e7eb', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#374151' }}>
-                Cancel
+                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#e8d5b4', border:'4px solid #703737', color:'#703737', cursor:'pointer', borderRadius:0 }}>
+                CANCEL
               </button>
             </div>
           </div>

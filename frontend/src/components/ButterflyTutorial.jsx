@@ -1,205 +1,221 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
 import ButterflyDiagramCanvas from './ButterflyDiagramCanvas';
 
+const BROWN = '#703737';
+const CREAM = '#e8d5b4';
+const DARK  = '#1a0f0f';
+const PAD   = 10;
 const EXAMPLE = { numerator1: 1, denominator1: 2, numerator2: 1, denominator2: 3, operator: '+' };
 
 const slides = [
   {
+    targetId: null,
     diagramStep: 0,
-    title: 'The Butterfly Method',
-    body: 'When two fractions have different bottom numbers (denominators), we cannot add or subtract them directly. We use the Butterfly Method to solve this!',
-    computation: null,
-    color: null,
+    title: 'BUTTERFLY METHOD',
+    body: 'When two fractions have different denominators, we use the Butterfly Method. Cross-multiply both ways, multiply the denominators, then combine!',
   },
   {
+    targetId: 'problem-box',
     diagramStep: 0,
-    title: 'Our Example',
-    body: "Let's walk through solving  1/2 + 1/3  together. The denominators are 2 and 3 — they're different, so we'll use the Butterfly Method.",
-    computation: '1/2  +  1/3  = ?',
-    color: '#555',
+    title: 'READ THE PROBLEM',
+    body: "Look at YOUR problem here. Note the two fractions — the denominators are different, so we can't add directly. We'll use 1/2 + 1/3 as a demo.",
   },
   {
+    targetId: 'problem-box',
     diagramStep: 1,
-    title: 'Step 1 — Left Cross Product',
-    body: 'Draw a diagonal line from the left numerator to the right denominator (the first butterfly wing). Multiply those two numbers together.',
-    computation: '1 × 3 = 3',
-    color: '#ef4444',
+    title: 'STEP 1 — LEFT CROSS',
+    body: 'Look at your problem. Multiply the LEFT numerator × RIGHT denominator.\n\nDemo: 1 × 3 = 3\n\nFind those numbers in YOUR problem above!',
   },
   {
+    targetId: 'problem-box',
     diagramStep: 2,
-    title: 'Step 2 — Right Cross Product',
-    body: 'Draw a diagonal line from the right numerator to the left denominator (the second wing). Multiply those two numbers.',
-    computation: '1 × 2 = 2',
-    color: '#10b981',
+    title: 'STEP 2 — RIGHT CROSS',
+    body: 'Still looking at your problem. Multiply the RIGHT numerator × LEFT denominator.\n\nDemo: 1 × 2 = 2\n\nFind those numbers in YOUR problem above!',
   },
   {
+    targetId: 'problem-box',
     diagramStep: 3,
-    title: 'Step 3 — Multiply the Denominators',
-    body: "Multiply both bottom numbers (denominators) together. The result becomes the denominator of your final answer.",
-    computation: '2 × 3 = 6',
-    color: '#8b5cf6',
+    title: 'STEP 3 — DENOMINATORS',
+    body: 'Multiply BOTH bottom numbers together. This is the denominator of your final answer.\n\nDemo: 2 × 3 = 6\n\nFind the two bottom numbers in YOUR problem!',
   },
   {
+    targetId: 'interactable',
     diagramStep: 4,
-    title: 'Step 4 — Combine the Cross Products',
-    body: 'Since we are adding, we ADD the results from Step 1 and Step 2. (If we were subtracting, we would subtract them.) This gives us the top number of the answer.',
-    computation: '3 + 2 = 5',
-    color: '#f59e0b',
+    title: 'STEP 4 — COMBINE HERE',
+    body: 'After drawing the ∞ symbol, combine the two cross products here using the operator.\n\nDemo: 3 + 2 = 5\n\nEnter your result in this box!',
   },
   {
+    targetId: 'interactable',
     diagramStep: 5,
-    title: 'Step 5 — Write & Simplify',
-    body: 'Put the combined cross products over the common denominator. Then check if the fraction can be simplified. Since 5 and 6 share no common factors, the final answer is:',
-    computation: '5 / 6',
-    color: '#333',
+    title: 'STEP 5 — FINAL ANSWER',
+    body: 'Enter your final fraction here: combined numerator over denominator product. Simplify if possible.\n\nDemo: 5/6\n\nType YOUR answer in this box!',
   },
   {
-    diagramStep: 5,
-    title: "You've Got This!",
-    body: "Now you know the Butterfly Method! Cross multiply both ways, multiply the denominators, then combine. Good luck, Wizard — it's your turn!",
-    computation: null,
-    color: null,
+    targetId: 'interactable',
+    diagramStep: null,
+    title: 'DRAW ∞ TO START',
+    body: 'Draw an infinity (∞) symbol inside this box to activate all the input fields.\n\nThen fill in each step using the numbers from your problem.',
+  },
+  {
+    targetId: null,
+    diagramStep: null,
+    title: '⚠ ABOUT THE HINT',
+    body: 'A Hint button appears after you draw the symbol.\n\nIf you use it, the formula will be shown — but your answer will NOT be fully recorded and your score for that problem will be reduced.\n\nTry to solve it on your own first!',
+    isWarning: true,
     isLast: true,
   },
 ];
 
+const PixelBtn = ({ onClick, disabled, primary, children }) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    position: 'relative',
+    padding: '10px 20px',
+    background: disabled ? '#4a2a2a' : primary ? BROWN : CREAM,
+    border: `3px solid ${BROWN}`,
+    color: disabled ? '#6b4040' : primary ? CREAM : BROWN,
+    fontFamily: '"Press Start 2P", monospace',
+    fontSize: 9, fontWeight: 700,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    borderRadius: 0, whiteSpace: 'nowrap',
+  }}>
+    {children}
+  </button>
+);
+
 const ButterflyTutorial = ({ onComplete }) => {
   const [index, setIndex] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
+  const tooltipRef = useRef(null);
+  const [tooltipPos, setTooltipPos] = useState({ left: 0, top: 0 });
+  const [arrowSide, setArrowSide] = useState('top');
+
   const slide = slides[index];
   const total = slides.length;
 
-  const next = () => {
-    if (index < total - 1) setIndex(i => i + 1);
-    else onComplete();
+  useLayoutEffect(() => {
+    if (!slide.targetId) { setTargetRect(null); return; }
+    const el = document.querySelector(`[data-tutorial="${slide.targetId}"]`);
+    setTargetRect(el ? el.getBoundingClientRect() : null);
+  }, [index, slide.targetId]);
+
+  useLayoutEffect(() => {
+    if (!targetRect || !tooltipRef.current) return;
+    const tt = tooltipRef.current.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const spaceBelow = vh - (targetRect.bottom + PAD);
+    const spaceAbove = targetRect.top - PAD;
+    const spaceRight = vw - (targetRect.right + PAD);
+
+    let left = targetRect.left + targetRect.width / 2 - tt.width / 2;
+    let top, side;
+
+    if (spaceBelow >= tt.height + 20) {
+      top = targetRect.bottom + PAD + 16; side = 'top';
+    } else if (spaceAbove >= tt.height + 20) {
+      top = targetRect.top - PAD - tt.height - 16; side = 'bottom';
+    } else if (spaceRight >= tt.width + 20) {
+      left = targetRect.right + PAD + 16;
+      top  = targetRect.top + targetRect.height / 2 - tt.height / 2;
+      side = 'left';
+    } else {
+      left = targetRect.left - PAD - tt.width - 16;
+      top  = targetRect.top + targetRect.height / 2 - tt.height / 2;
+      side = 'right';
+    }
+
+    left = Math.max(8, Math.min(vw - tt.width - 8, left));
+    top  = Math.max(8, Math.min(vh - tt.height - 8, top));
+    setTooltipPos({ left, top });
+    setArrowSide(side);
+  }, [targetRect]);
+
+  const next = () => index < total - 1 ? setIndex(i => i + 1) : onComplete();
+  const prev = () => index > 0 && setIndex(i => i - 1);
+
+  const arrowStyle = (side) => {
+    const base = { position:'absolute', width:0, height:0, border:'10px solid transparent' };
+    switch (side) {
+      case 'top':    return { ...base, top:-20,    left:'50%', transform:'translateX(-50%)',  borderBottomColor: BROWN };
+      case 'bottom': return { ...base, bottom:-20, left:'50%', transform:'translateX(-50%)',  borderTopColor: BROWN };
+      case 'left':   return { ...base, left:-20,   top:'50%',  transform:'translateY(-50%)',  borderRightColor: BROWN };
+      case 'right':  return { ...base, right:-20,  top:'50%',  transform:'translateY(-50%)',  borderLeftColor: BROWN };
+      default: return base;
+    }
   };
-  const prev = () => { if (index > 0) setIndex(i => i - 1); };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 2000,
-      background: 'rgba(0,0,0,0.80)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: 20,
-        width: 520,
-        maxWidth: '95vw',
-        boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+    <>
+      {targetRect ? (
+        <>
+          <div style={{ position:'fixed', top:0, left:0, right:0, height:Math.max(0,targetRect.top-PAD), background:'rgba(0,0,0,0.78)', zIndex:1999, pointerEvents:'none' }} />
+          <div style={{ position:'fixed', top:targetRect.bottom+PAD, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.78)', zIndex:1999, pointerEvents:'none' }} />
+          <div style={{ position:'fixed', top:targetRect.top-PAD, left:0, width:Math.max(0,targetRect.left-PAD), height:targetRect.height+PAD*2, background:'rgba(0,0,0,0.78)', zIndex:1999, pointerEvents:'none' }} />
+          <div style={{ position:'fixed', top:targetRect.top-PAD, left:targetRect.right+PAD, right:0, height:targetRect.height+PAD*2, background:'rgba(0,0,0,0.78)', zIndex:1999, pointerEvents:'none' }} />
+          <div style={{ position:'fixed', top:targetRect.top-PAD, left:targetRect.left-PAD, width:targetRect.width+PAD*2, height:targetRect.height+PAD*2, border:'3px solid #fbbf24', boxShadow:'0 0 0 2px #fbbf2488, 0 0 20px 4px #fbbf2466', zIndex:2000, pointerEvents:'none' }} />
+        </>
+      ) : (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', zIndex:1999, pointerEvents:'none' }} />
+      )}
 
-        {/* Top bar */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '14px 20px',
-          background: '#f3f4f6',
-          borderBottom: '1px solid #e5e7eb',
-        }}>
-          <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>
-            BUTTERFLY METHOD TUTORIAL
-          </span>
-          <button
-            onClick={onComplete}
-            style={{
-              fontSize: 12, color: '#9ca3af', background: 'none',
-              border: '1px solid #d1d5db', borderRadius: 6,
-              padding: '4px 12px', cursor: 'pointer',
-            }}
-          >
-            Skip Tutorial
-          </button>
+      <div
+        ref={tooltipRef}
+        style={{
+          position: 'fixed',
+          left: targetRect ? tooltipPos.left : '50%',
+          top:  targetRect ? tooltipPos.top  : '50%',
+          transform: targetRect ? 'none' : 'translate(-50%,-50%)',
+          zIndex: 2001,
+          width: slide.diagramStep !== null ? 520 : 360,
+          maxWidth: '96vw',
+          background: CREAM,
+          border: `4px solid ${BROWN}`,
+          fontFamily: '"Press Start 2P", monospace',
+        }}
+      >
+        {targetRect && <div style={arrowStyle(arrowSide)} />}
+        <div style={{ position:'absolute', inset:5, border:`1px solid ${BROWN}`, pointerEvents:'none' }} />
+        {[[-6,-6],[null,-6],[-6,null],[null,null]].map(([t,l],i)=>(
+          <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:12, height:12, background:BROWN,
+            ...(t!==null?{top:t}:{bottom:-6}), ...(l!==null?{left:l}:{right:-6}) }}/>
+        ))}
+
+        {/* Header */}
+        <div style={{ background: slide.isWarning ? '#7f1d1d' : BROWN, padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:9, color:CREAM, letterSpacing:1 }}>{slide.title}</span>
+          <button onClick={onComplete} style={{ fontSize:8, color:CREAM, background:'transparent', border:`1px solid ${CREAM}`, padding:'3px 8px', fontFamily:'"Press Start 2P", monospace', cursor:'pointer' }}>SKIP</button>
         </div>
 
-        {/* Diagram */}
-        <div style={{
-          background: '#f9fafb',
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          padding: '20px 0 10px',
-          borderBottom: '1px solid #e5e7eb',
-        }}>
-          <ButterflyDiagramCanvas problem={EXAMPLE} currentStep={slide.diagramStep} />
-        </div>
+        {/* Butterfly diagram */}
+        {slide.diagramStep !== null && (
+          <div style={{ background: DARK, borderBottom:`3px solid ${BROWN}`, display:'flex', justifyContent:'center', alignItems:'center', padding:'12px 8px', overflowX:'auto' }}>
+            <ButterflyDiagramCanvas problem={EXAMPLE} currentStep={slide.diagramStep} />
+          </div>
+        )}
 
-        {/* Content */}
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 20, color: '#111827', fontWeight: 700 }}>
-            {slide.title}
-          </h2>
-          <p style={{ margin: 0, fontSize: 15, color: '#374151', lineHeight: 1.6 }}>
-            {slide.body}
-          </p>
-
-          {slide.computation && (
-            <div style={{
-              display: 'flex', justifyContent: 'center',
-              padding: '12px 24px',
-              background: `${slide.color}15`,
-              border: `2px solid ${slide.color}`,
-              borderRadius: 12,
-            }}>
-              <span style={{
-                fontSize: 26, fontWeight: 800,
-                color: slide.color,
-                letterSpacing: 2,
-              }}>
-                {slide.computation}
-              </span>
-            </div>
-          )}
+        {/* Body */}
+        <div style={{ padding:'14px 16px 10px', fontSize:9, color:DARK, lineHeight:1.9, whiteSpace:'pre-line' }}>
+          {slide.isWarning
+            ? slide.body.split('\n\n').map((para, i) => (
+                <p key={i} style={{ margin:'0 0 10px', color: i===1?'#b91c1c':DARK, fontWeight: i===1?700:400 }}>{para}</p>
+              ))
+            : slide.body
+          }
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '16px 28px',
-          borderTop: '1px solid #e5e7eb',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: '#f9fafb',
-        }}>
-          {/* Dot indicators */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            {slides.map((_, i) => (
-              <div key={i} style={{
-                width: i === index ? 18 : 8,
-                height: 8,
-                borderRadius: 4,
-                background: i === index ? '#8b5cf6' : '#d1d5db',
-                transition: 'all 0.2s',
-              }} />
+        <div style={{ padding:'10px 14px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:`2px solid ${BROWN}` }}>
+          <div style={{ display:'flex', gap:5 }}>
+            {slides.map((_,i)=>(
+              <div key={i} style={{ width:i===index?14:7, height:7, background:i===index?BROWN:'#b09090', transition:'all 0.2s' }} />
             ))}
           </div>
-
-          {/* Navigation */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              onClick={prev}
-              disabled={index === 0}
-              style={{
-                padding: '8px 20px', fontSize: 14, fontWeight: 600,
-                border: '2px solid #d1d5db', borderRadius: 8, cursor: index === 0 ? 'not-allowed' : 'pointer',
-                background: '#fff', color: index === 0 ? '#9ca3af' : '#374151',
-              }}
-            >
-              ← Back
-            </button>
-            <button
-              onClick={next}
-              style={{
-                padding: '8px 24px', fontSize: 14, fontWeight: 700,
-                border: 'none', borderRadius: 8, cursor: 'pointer',
-                background: slide.isLast ? '#10b981' : '#8b5cf6',
-                color: '#fff',
-              }}
-            >
-              {slide.isLast ? 'Start Playing!' : 'Next →'}
-            </button>
+          <div style={{ display:'flex', gap:8 }}>
+            <PixelBtn onClick={prev} disabled={index===0}>← BACK</PixelBtn>
+            <PixelBtn onClick={next} primary>{slide.isLast ? 'PLAY! →' : 'NEXT →'}</PixelBtn>
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 };
 
