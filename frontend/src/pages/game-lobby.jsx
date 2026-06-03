@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './game-lobby.css';
+import LoadingScreen from '../components/LoadingScreen';
 import IslandInterior from './IslandInterior';
 import GameMenuModal from '../components/GameMenuModal';
 
@@ -316,15 +317,6 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
     }
   };
 
-  if (loading) {
-    return (
-      <div className="game-lobby">
-        <canvas ref={canvasRef} className="galaxy-canvas" />
-        <p style={{ position: 'relative', zIndex: 2, color: '#fff' }}>Loading...</p>
-      </div>
-    );
-  }
-
   const islands = [
     {
       name: 'Similar',
@@ -380,6 +372,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   return (
     <div className="game-lobby">
       <canvas ref={canvasRef} className="galaxy-canvas" />
+      {loading && <LoadingScreen />}
       <div className="lobby-top-right">
         <button className="dashboard-btn" onClick={onOpenDashboard}>Dashboard</button>
         <button className="logout-btn" onClick={() => setShowMenu(true)}>Menu</button>

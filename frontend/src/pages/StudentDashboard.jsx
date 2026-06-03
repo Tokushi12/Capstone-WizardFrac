@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CompetencyMasteryCard from '../components/CompetencyMasteryCard';
 import './StudentDashboard.css';
+import LoadingScreen from '../components/LoadingScreen';
 
 const StudentDashboard = ({ studentId, onBack }) => {
   const [diagnostics, setDiagnostics] = useState(null);
@@ -27,11 +28,7 @@ const StudentDashboard = ({ studentId, onBack }) => {
   }, [studentId]);
 
   if (loading) {
-    return (
-      <div className="dashboard-container">
-        <div className="loading-spinner">⚗️ Loading your progress…</div>
-      </div>
-    );
+    return <LoadingScreen message="LOADING PROGRESS..." />;
   }
 
   if (error) {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './character-selection.css';
+import LoadingScreen from '../components/LoadingScreen';
 
-const CharacterSelection = ({ studentId, onCharacterSelected }) => {
+const CharacterSelection = ({ studentId, onCharacterSelected, onBack }) => {
   const [characters, setCharacters] = useState([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +81,7 @@ const CharacterSelection = ({ studentId, onCharacterSelected }) => {
   };
 
   if (loading) {
-    return <div className="character-selection"><p>Loading characters...</p></div>;
+    return <LoadingScreen message="LOADING CHARACTERS..." />;
   }
 
   return (
@@ -91,7 +92,7 @@ const CharacterSelection = ({ studentId, onCharacterSelected }) => {
           <span>WIZARDFRAC</span>
         </div>
         <div className="nav-menu">
-          <button type="button" className="menu-btn">Menu</button>
+          <button type="button" className="menu-btn" onClick={onBack}>← Back to Main</button>
         </div>
       </div>
 

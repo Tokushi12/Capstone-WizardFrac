@@ -204,6 +204,7 @@ function App() {
         <CharacterSelection
           studentId={studentId}
           onCharacterSelected={handleCharacterSelected}
+          onBack={handleReturnToLogin}
         />
       )}
       
