@@ -1586,9 +1586,6 @@ const DissimilarIslandGame = ({
                         ); })()}
                         {/* Hint */}
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                          <div style={{ fontSize:7, fontFamily:'"Press Start 2P", monospace', color:'#fbbf24', textAlign:'center', lineHeight:1.5, textShadow:'0 0 6px rgba(0,0,0,0.9)', whiteSpace:'nowrap' }}>
-                            ⚠ USING HINT WILL<br/>NOT BE RECORDED
-                          </div>
                         <button style={{ padding:'4px 16px', fontSize:10, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor:'pointer', backdropFilter:'blur(6px)' }}>
                           <div style={{position:'absolute',top:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',top:-6,right:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>

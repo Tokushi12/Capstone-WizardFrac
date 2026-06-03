@@ -1488,14 +1488,6 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                   ) : null}
                   {((!hintUsed && !checkPhase) || (!phase2HintUsed && finalAnswerVisible)) && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                      <div style={{
-                        fontSize:7, fontFamily:'"Press Start 2P", monospace',
-                        color:'#fbbf24', textAlign:'center', lineHeight:1.5,
-                        textShadow:'0 0 6px rgba(0,0,0,0.9)',
-                        whiteSpace:'nowrap',
-                      }}>
-                        ⚠ USING HINT WILL<br/>NOT BE RECORDED
-                      </div>
                     <button
                       onClick={() => finalAnswerVisible
                         ? (recordHintUsed(), setPhase2HintUsed(true), setFormulaVisible(true))
