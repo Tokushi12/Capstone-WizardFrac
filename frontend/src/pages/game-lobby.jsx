@@ -302,6 +302,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   const handleEnterIsland = (island) => {
     if (!island.unlocked || actionLocked.current) return;
     actionLocked.current = true;
+    new Audio('/SoundEffects/islandSelect.wav').play().catch(() => {});
     setAnimIsland(island);
     setAnimPhase('flash');
   };
@@ -316,10 +317,14 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
         const islandRect = islandEl?.getBoundingClientRect();
         if (titleRect) setSparkleStart({ x: titleRect.left + titleRect.width / 2, y: titleRect.top + titleRect.height / 2 });
         if (islandRect) setSparkleEnd({ x: islandRect.left + islandRect.width / 2, y: islandRect.top + islandRect.height / 2 });
+        new Audio('/SoundEffects/starAppear.wav').play().catch(() => {});
         setAnimPhase('sparkle');
       }, 500);
     } else if (animPhase === 'sparkle') {
-      t = setTimeout(() => setAnimPhase('travel'), 1200);
+      t = setTimeout(() => {
+        new Audio('/SoundEffects/starMove.wav').play().catch(() => {});
+        setAnimPhase('travel');
+      }, 1200);
     } else if (animPhase === 'explode') {
       t = setTimeout(() => {
         const island = animIsland;
@@ -350,7 +355,10 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       if (t < 1) rafId = requestAnimationFrame(animate);
-      else setAnimPhase('explode');
+      else {
+        new Audio('/SoundEffects/starHit.wav').play().catch(() => {});
+        setAnimPhase('explode');
+      }
     };
     rafId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId);
@@ -473,7 +481,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="islands-grid">
+        <div className="islands-grid" style={{ pointerEvents: animPhase ? 'none' : 'auto' }}>
           {islands.map(island => (
             <div
               key={island.name}
