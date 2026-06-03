@@ -1489,10 +1489,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                   {((!hintUsed && !checkPhase) || (!phase2HintUsed && finalAnswerVisible)) && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                     <button
-                      onClick={() => finalAnswerVisible
-                        ? (recordHintUsed(), setPhase2HintUsed(true), setFormulaVisible(true))
-                        : setShowHintConfirm(true)
-                      }
+                      onClick={() => setShowHintConfirm(true)}
                       style={{
                         padding: '4px 16px',
                         fontSize: 10, fontWeight: 700,
@@ -2022,7 +2019,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c', fontWeight:900}}>reduce your score</span> for this problem.</p>
             <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c', fontWeight:900}}>not be fully recorded</span> in your progress.</p>
             <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
-              <button onClick={() => { recordHintUsed(); setHintUsed(true); setFormulaVisible(true); setShowHintConfirm(false); }}
+              <button onClick={() => { recordHintUsed(); if (finalAnswerVisible) { setPhase2HintUsed(true); } else { setHintUsed(true); } setFormulaVisible(true); setShowHintConfirm(false); }}
                 style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
                 YES, SHOW HINT
               </button>

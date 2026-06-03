@@ -144,7 +144,7 @@ const DrawingCanvas = ({ onCircleDetected, mode = 'circle' }) => {
 
   // ── circle detection ──
   const checkForCircle = () => {
-    if (points.length < 20) { clearCanvas(); return; }
+    if (points.length < 12) { clearCanvas(); return; }
     const cx = points.reduce((s, p) => s + p.x, 0) / points.length;
     const cy = points.reduce((s, p) => s + p.y, 0) / points.length;
     const ds = points.map(p => Math.hypot(p.x - cx, p.y - cy));
@@ -152,7 +152,7 @@ const DrawingCanvas = ({ onCircleDetected, mode = 'circle' }) => {
     const std = Math.sqrt(ds.reduce((s, d) => s + (d - avg) ** 2, 0) / ds.length);
     const se  = Math.hypot(points[0].x - points[points.length-1].x, points[0].y - points[points.length-1].y);
 
-    if (std < avg * 0.3 && se < avg * 0.5) {
+    if (std < avg * 0.5 && se < avg * 0.9) {
       clearCanvas();
       new Audio('/SoundEffects/confirmDrawing.wav').play().catch(() => {});
       setMagicCircle({ x: cx, y: cy, r: avg });
