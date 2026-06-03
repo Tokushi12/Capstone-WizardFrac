@@ -13,209 +13,231 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   const [error, setError] = useState('');
   const [character, setCharacter] = useState(selectedCharacter);
   const actionLocked = useRef(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const stars = Array.from({ length: 180 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: Math.random() * 1.5 + 0.3,
-      alpha: Math.random() * 0.6 + 0.4,
-      twinkleSpeed: Math.random() * 0.008 + 0.003,
-      twinkleDir: Math.random() < 0.5 ? 1 : -1,
-      vx: (Math.random() - 0.5) * 0.00007,
-      vy: (Math.random() - 0.5) * 0.00007,
-      color: ['#ffffff', '#cce4ff', '#ffe8cc', '#e0ccff'][Math.floor(Math.random() * 4)],
-    }));
-
-    const dust = Array.from({ length: 40 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: Math.random() * 3 + 2,
-      alpha: Math.random() * 0.2 + 0.05,
-      twinkleSpeed: Math.random() * 0.003 + 0.001,
-      twinkleDir: Math.random() < 0.5 ? 1 : -1,
-      color: ['rgba(180,140,255', 'rgba(140,180,255', 'rgba(255,180,220'][Math.floor(Math.random() * 3)],
-    }));
-
-    const NEBULAE = [
-      { cx: 0.15, cy: 0.25, r: 0.22, c: [100, 60, 200] },
-      { cx: 0.80, cy: 0.55, r: 0.18, c: [60, 100, 220] },
-      { cx: 0.50, cy: 0.78, r: 0.15, c: [180, 60, 150] },
-      { cx: 0.35, cy: 0.45, r: 0.12, c: [60, 160, 200] },
-    ];
-
-    const shootingStars = [];
-    let nextShot = Date.now() + 2000 + Math.random() * 3000;
-
-    const CLOUD_PUFFS = [
-      { x: 0,   y: 0,   r: 52 },
-      { x: 48,  y: -18, r: 40 },
-      { x: -46, y: -14, r: 36 },
-      { x: 88,  y: 4,   r: 32 },
-      { x: -80, y: 4,   r: 28 },
-      { x: 38,  y: 14,  r: 26 },
-      { x: -30, y: 14,  r: 24 },
-    ];
-
-    const drawCloud = (cx, cy, scale, alpha, color) => {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      CLOUD_PUFFS.forEach(p => {
-        ctx.moveTo(cx + p.x * scale + p.r * scale, cy + p.y * scale);
-        ctx.arc(cx + p.x * scale, cy + p.y * scale, p.r * scale, 0, Math.PI * 2);
-      });
-      ctx.fill();
-      ctx.restore();
-    };
-
-    const clouds = Array.from({ length: 6 }, (_, i) => ({
-      x: Math.random(),
-      y: 0.05 + Math.random() * 0.75,
-      vx: (0.00006 + Math.random() * 0.00008) * (Math.random() < 0.65 ? 1 : -1),
-      scale: 0.7 + Math.random() * 1.4,
-      alpha: 0.18 + Math.random() * 0.18,
-      color: i < 3 ? 'rgba(255,255,255,1)' : 'rgba(120,60,200,1)',
-    }));
-
-    const draw = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-
-      NEBULAE.forEach(n => {
-        const gx = n.cx * w, gy = n.cy * h, gr = n.r * Math.max(w, h);
-        const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-        grad.addColorStop(0, `rgba(${n.c[0]},${n.c[1]},${n.c[2]},0.13)`);
-        grad.addColorStop(1, `rgba(${n.c[0]},${n.c[1]},${n.c[2]},0)`);
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(gx, gy, gr, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Drifting clouds
-      clouds.forEach(cloud => {
-        cloud.x += cloud.vx;
-        if (cloud.x > 1.25) cloud.x = -0.25;
-        if (cloud.x < -0.25) cloud.x = 1.25;
-        drawCloud(cloud.x * w, cloud.y * h, cloud.scale, cloud.alpha, cloud.color);
-      });
-
-      dust.forEach(p => {
-        p.alpha += p.twinkleSpeed * p.twinkleDir;
-        if (p.alpha > 0.28) { p.alpha = 0.28; p.twinkleDir = -1; }
-        if (p.alpha < 0.02) { p.alpha = 0.02; p.twinkleDir = 1; }
-        const px = p.x * w, py = p.y * h;
-        const grad = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3);
-        grad.addColorStop(0, `${p.color},${p.alpha})`);
-        grad.addColorStop(1, `${p.color},0)`);
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(px, py, p.r * 3, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      stars.forEach(p => {
-        p.alpha += p.twinkleSpeed * p.twinkleDir;
-        if (p.alpha > 1)   { p.alpha = 1;   p.twinkleDir = -1; }
-        if (p.alpha < 0.2) { p.alpha = 0.2; p.twinkleDir = 1; }
-        p.x = (p.x + p.vx + 1) % 1;
-        p.y = (p.y + p.vy + 1) % 1;
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x * w, p.y * h, p.r, 0, Math.PI * 2);
-        ctx.fill();
-        if (p.r > 1.2) {
-          ctx.globalAlpha = p.alpha * 0.35;
-          ctx.beginPath();
-          ctx.arc(p.x * w, p.y * h, p.r * 2.8, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      });
-
-      // Shooting stars
-      const now = Date.now();
-      if (now >= nextShot) {
-        const angle = (25 + Math.random() * 35) * Math.PI / 180;
-        const speed = 0.007 + Math.random() * 0.005;
-        shootingStars.push({
-          x: Math.random() * 0.65,
-          y: Math.random() * 0.4,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          alpha: 1,
-          tail: [],
-          tailLen: 28 + Math.floor(Math.random() * 18),
-        });
-        nextShot = now + 2500 + Math.random() * 4000;
-      }
-
-      for (let i = shootingStars.length - 1; i >= 0; i--) {
-        const s = shootingStars[i];
-        s.tail.unshift({ x: s.x, y: s.y });
-        if (s.tail.length > s.tailLen) s.tail.pop();
-        s.x += s.vx;
-        s.y += s.vy;
-        s.alpha -= 0.013;
-        if (s.x > 1.1 || s.y > 1.1 || s.alpha <= 0) {
-          shootingStars.splice(i, 1);
-          continue;
-        }
-        if (s.tail.length > 1) {
-          const last = s.tail[s.tail.length - 1];
-          const tg = ctx.createLinearGradient(s.x * w, s.y * h, last.x * w, last.y * h);
-          tg.addColorStop(0, `rgba(255,255,255,${s.alpha})`);
-          tg.addColorStop(1, 'rgba(200,220,255,0)');
-          ctx.save();
-          ctx.strokeStyle = tg;
-          ctx.lineWidth = 1.8;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(s.x * w, s.y * h);
-          s.tail.forEach(tp => ctx.lineTo(tp.x * w, tp.y * h));
-          ctx.stroke();
-          ctx.restore();
-        }
-        ctx.save();
-        ctx.globalAlpha = s.alpha;
-        const hg = ctx.createRadialGradient(s.x * w, s.y * h, 0, s.x * w, s.y * h, 5);
-        hg.addColorStop(0, 'rgba(255,255,255,1)');
-        hg.addColorStop(1, 'rgba(200,220,255,0)');
-        ctx.fillStyle = hg;
-        ctx.beginPath();
-        ctx.arc(s.x * w, s.y * h, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      galaxyFrameRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => {
-      cancelAnimationFrame(galaxyFrameRef.current);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
   const [showMenu, setShowMenu] = useState(false);
   const canvasRef = useRef(null);
   const galaxyFrameRef = useRef(null);
+  const titleBoxRef = useRef(null);
+  const islandCardRefs = useRef({});
+  const sparkleRef = useRef(null);
+  const [animPhase, setAnimPhase] = useState(null);
+  const [animIsland, setAnimIsland] = useState(null);
+  const [sparkleStart, setSparkleStart] = useState({ x: 0, y: 0 });
+  const [sparkleEnd, setSparkleEnd] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (showInterior) return;
+    let animating = true;
+    let resizeHandler = null;
+
+    const tryStart = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        if (animating) galaxyFrameRef.current = requestAnimationFrame(tryStart);
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      resizeHandler = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      resizeHandler();
+      window.addEventListener('resize', resizeHandler);
+
+      const stars = Array.from({ length: 180 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: Math.random() * 1.5 + 0.3,
+        alpha: Math.random() * 0.6 + 0.4,
+        twinkleSpeed: Math.random() * 0.008 + 0.003,
+        twinkleDir: Math.random() < 0.5 ? 1 : -1,
+        vx: (Math.random() - 0.5) * 0.00007,
+        vy: (Math.random() - 0.5) * 0.00007,
+        color: ['#ffffff', '#cce4ff', '#ffe8cc', '#e0ccff'][Math.floor(Math.random() * 4)],
+      }));
+
+      const dust = Array.from({ length: 40 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: Math.random() * 3 + 2,
+        alpha: Math.random() * 0.2 + 0.05,
+        twinkleSpeed: Math.random() * 0.003 + 0.001,
+        twinkleDir: Math.random() < 0.5 ? 1 : -1,
+        color: ['rgba(180,140,255', 'rgba(140,180,255', 'rgba(255,180,220'][Math.floor(Math.random() * 3)],
+      }));
+
+      const NEBULAE = [
+        { cx: 0.15, cy: 0.25, r: 0.22, c: [100, 60, 200] },
+        { cx: 0.80, cy: 0.55, r: 0.18, c: [60, 100, 220] },
+        { cx: 0.50, cy: 0.78, r: 0.15, c: [180, 60, 150] },
+        { cx: 0.35, cy: 0.45, r: 0.12, c: [60, 160, 200] },
+      ];
+
+      const shootingStars = [];
+      let nextShot = Date.now() + 800 + Math.random() * 1200;
+
+      const CLOUD_PUFFS = [
+        { x: 0,   y: 0,   r: 52 },
+        { x: 48,  y: -18, r: 40 },
+        { x: -46, y: -14, r: 36 },
+        { x: 88,  y: 4,   r: 32 },
+        { x: -80, y: 4,   r: 28 },
+        { x: 38,  y: 14,  r: 26 },
+        { x: -30, y: 14,  r: 24 },
+      ];
+
+      const drawCloud = (cx, cy, scale, alpha, color) => {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        CLOUD_PUFFS.forEach(p => {
+          const size = p.r * scale * 2;
+          ctx.rect(cx + p.x * scale - size / 2, cy + p.y * scale - size / 2, size, size);
+        });
+        ctx.fill();
+        ctx.restore();
+      };
+
+      const clouds = Array.from({ length: 6 }, (_, i) => ({
+        x: Math.random(),
+        y: 0.05 + Math.random() * 0.75,
+        vx: (0.00006 + Math.random() * 0.00008) * (Math.random() < 0.65 ? 1 : -1),
+        scale: 0.7 + Math.random() * 1.4,
+        alpha: 0.18 + Math.random() * 0.18,
+        color: i < 3 ? 'rgba(180,130,255,1)' : 'rgba(60,20,120,1)',
+      }));
+
+      const draw = () => {
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        NEBULAE.forEach(n => {
+          const gx = n.cx * w, gy = n.cy * h, gr = n.r * Math.max(w, h);
+          const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+          grad.addColorStop(0, `rgba(${n.c[0]},${n.c[1]},${n.c[2]},0.13)`);
+          grad.addColorStop(1, `rgba(${n.c[0]},${n.c[1]},${n.c[2]},0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        clouds.forEach(cloud => {
+          cloud.x += cloud.vx;
+          if (cloud.x > 1.25) cloud.x = -0.25;
+          if (cloud.x < -0.25) cloud.x = 1.25;
+          drawCloud(cloud.x * w, cloud.y * h, cloud.scale, cloud.alpha, cloud.color);
+        });
+
+        dust.forEach(p => {
+          p.alpha += p.twinkleSpeed * p.twinkleDir;
+          if (p.alpha > 0.28) { p.alpha = 0.28; p.twinkleDir = -1; }
+          if (p.alpha < 0.02) { p.alpha = 0.02; p.twinkleDir = 1; }
+          const px = p.x * w, py = p.y * h;
+          const grad = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3);
+          grad.addColorStop(0, `${p.color},${p.alpha})`);
+          grad.addColorStop(1, `${p.color},0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(px, py, p.r * 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        stars.forEach(p => {
+          p.alpha += p.twinkleSpeed * p.twinkleDir;
+          if (p.alpha > 1)   { p.alpha = 1;   p.twinkleDir = -1; }
+          if (p.alpha < 0.2) { p.alpha = 0.2; p.twinkleDir = 1; }
+          p.x = (p.x + p.vx + 1) % 1;
+          p.y = (p.y + p.vy + 1) % 1;
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x * w, p.y * h, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          if (p.r > 1.2) {
+            ctx.globalAlpha = p.alpha * 0.35;
+            ctx.beginPath();
+            ctx.arc(p.x * w, p.y * h, p.r * 2.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        });
+
+        const now = Date.now();
+        if (now >= nextShot) {
+          const count = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 2) : 1;
+          for (let s = 0; s < count; s++) {
+            const angle = (25 + Math.random() * 35) * Math.PI / 180;
+            const speed = 0.007 + Math.random() * 0.005;
+            shootingStars.push({
+              x: Math.random() * 0.65,
+              y: Math.random() * 0.4,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              alpha: 1,
+              tail: [],
+              tailLen: 28 + Math.floor(Math.random() * 18),
+            });
+          }
+          nextShot = now + 800 + Math.random() * 1800;
+        }
+
+        for (let i = shootingStars.length - 1; i >= 0; i--) {
+          const s = shootingStars[i];
+          s.tail.unshift({ x: s.x, y: s.y });
+          if (s.tail.length > s.tailLen) s.tail.pop();
+          s.x += s.vx;
+          s.y += s.vy;
+          s.alpha -= 0.013;
+          if (s.x > 1.1 || s.y > 1.1 || s.alpha <= 0) {
+            shootingStars.splice(i, 1);
+            continue;
+          }
+          if (s.tail.length > 1) {
+            const last = s.tail[s.tail.length - 1];
+            const tg = ctx.createLinearGradient(s.x * w, s.y * h, last.x * w, last.y * h);
+            tg.addColorStop(0, `rgba(255,255,255,${s.alpha})`);
+            tg.addColorStop(1, 'rgba(200,220,255,0)');
+            ctx.save();
+            ctx.strokeStyle = tg;
+            ctx.lineWidth = 1.8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(s.x * w, s.y * h);
+            s.tail.forEach(tp => ctx.lineTo(tp.x * w, tp.y * h));
+            ctx.stroke();
+            ctx.restore();
+          }
+          ctx.save();
+          ctx.globalAlpha = s.alpha;
+          const hg = ctx.createRadialGradient(s.x * w, s.y * h, 0, s.x * w, s.y * h, 5);
+          hg.addColorStop(0, 'rgba(255,255,255,1)');
+          hg.addColorStop(1, 'rgba(200,220,255,0)');
+          ctx.fillStyle = hg;
+          ctx.beginPath();
+          ctx.arc(s.x * w, s.y * h, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (animating) galaxyFrameRef.current = requestAnimationFrame(draw);
+      };
+
+      draw();
+    };
+
+    tryStart();
+
+    return () => {
+      animating = false;
+      cancelAnimationFrame(galaxyFrameRef.current);
+      if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    };
+  }, [showInterior]);
 
   useEffect(() => {
     setCharacter(selectedCharacter);
@@ -270,14 +292,69 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
     };
   }, [studentId, selectedCharacter]);
 
-  const handleEnterIsland = (island) => {
-    if (!island.unlocked || actionLocked.current) return;
-    actionLocked.current = true;
+  const doEnterIsland = (island) => {
     onEnterIslandInterior?.();
     setSelectedIsland(island);
     setShowInterior(true);
     setSelectedLevel(1);
   };
+
+  const handleEnterIsland = (island) => {
+    if (!island.unlocked || actionLocked.current) return;
+    actionLocked.current = true;
+    setAnimIsland(island);
+    setAnimPhase('flash');
+  };
+
+  useEffect(() => {
+    if (!animPhase || !animIsland) return;
+    let t;
+    if (animPhase === 'flash') {
+      t = setTimeout(() => {
+        const titleRect = titleBoxRef.current?.getBoundingClientRect();
+        const islandEl = islandCardRefs.current[animIsland.name];
+        const islandRect = islandEl?.getBoundingClientRect();
+        if (titleRect) setSparkleStart({ x: titleRect.left + titleRect.width / 2, y: titleRect.top + titleRect.height / 2 });
+        if (islandRect) setSparkleEnd({ x: islandRect.left + islandRect.width / 2, y: islandRect.top + islandRect.height / 2 });
+        setAnimPhase('sparkle');
+      }, 500);
+    } else if (animPhase === 'sparkle') {
+      t = setTimeout(() => setAnimPhase('travel'), 1200);
+    } else if (animPhase === 'explode') {
+      t = setTimeout(() => {
+        const island = animIsland;
+        setAnimPhase(null);
+        setAnimIsland(null);
+        actionLocked.current = false;
+        doEnterIsland(island);
+      }, 900);
+    }
+    return () => clearTimeout(t);
+  }, [animPhase, animIsland]);
+
+  useEffect(() => {
+    if (animPhase !== 'travel' || !sparkleRef.current) return;
+    const el = sparkleRef.current;
+    const startX = sparkleStart.x;
+    const startY = sparkleStart.y;
+    const endX = sparkleEnd.x;
+    const endY = sparkleEnd.y;
+    const arcHeight = Math.max(140, Math.abs(endX - startX) * 0.5);
+    const duration = 900;
+    const startTime = performance.now();
+    let rafId;
+    const animate = (now) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const x = startX + (endX - startX) * t;
+      const y = startY + (endY - startY) * t + arcHeight * Math.sin(Math.PI * t);
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      if (t < 1) rafId = requestAnimationFrame(animate);
+      else setAnimPhase('explode');
+    };
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [animPhase, sparkleStart, sparkleEnd]);
 
   const handleBackToLobby = () => {
     actionLocked.current = false;
@@ -378,7 +455,18 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
         <button className="logout-btn" onClick={() => setShowMenu(true)}>Menu</button>
       </div>
       <div className="lobby-container">
-        <div className="lobby-title-box">
+        <div
+          ref={titleBoxRef}
+          className={`lobby-title-box${animPhase === 'flash' ? ' anim-flash' : ''}${animPhase && animPhase !== 'flash' ? ' anim-hidden' : ''}`}
+        >
+          <div style={{ position: 'absolute', top: -6,   left: -6,  width: 10, height: 10, background: '#f6b825' }} />
+          <div style={{ position: 'absolute', top: -6,   right: -6, width: 10, height: 10, background: '#f6b825' }} />
+          <div style={{ position: 'absolute', bottom: -6, left: -6,  width: 10, height: 10, background: '#f6b825' }} />
+          <div style={{ position: 'absolute', bottom: -6, right: -6, width: 10, height: 10, background: '#f6b825' }} />
+          <div style={{ position: 'absolute', top: 3,    left: 3,   width: 5,  height: 5,  background: '#f6b825' }} />
+          <div style={{ position: 'absolute', top: 3,    right: 3,  width: 5,  height: 5,  background: '#f6b825' }} />
+          <div style={{ position: 'absolute', bottom: 3,  left: 3,   width: 5,  height: 5,  background: '#f6b825' }} />
+          <div style={{ position: 'absolute', bottom: 3,  right: 3,  width: 5,  height: 5,  background: '#f6b825' }} />
           <h1 className="lobby-title">WIZARD ISLANDS</h1>
           <p className="lobby-subtitle">Choose your adventure</p>
         </div>
@@ -389,10 +477,17 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
           {islands.map(island => (
             <div
               key={island.name}
+              ref={el => islandCardRefs.current[island.name] = el}
               className={`island-card-wrapper ${!island.unlocked ? 'locked' : ''}`}
               onClick={() => handleEnterIsland(island)}
               style={{
-                opacity: island.unlocked ? 1 : 0.6,
+                opacity: animPhase && animIsland && island.name !== animIsland.name
+                  ? 0
+                  : island.unlocked ? 1 : 0.6,
+                transition: animPhase ? 'opacity 0.5s ease, filter 0.5s ease' : 'opacity 0.3s ease',
+                filter: animPhase === 'explode' && animIsland?.name === island.name
+                  ? 'brightness(4)'
+                  : 'brightness(1)',
               }}
             >
               <div className="floating-island-wrapper">
@@ -418,6 +513,34 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
         </div>
 
       </div>
+
+      {animPhase && animPhase !== 'flash' && (
+        <div
+          ref={sparkleRef}
+          style={{
+            position: 'fixed',
+            left: sparkleStart.x,
+            top: sparkleStart.y,
+            transform: 'translate(-50%, -50%)',
+            width: animPhase === 'explode' ? 180 : 80,
+            height: animPhase === 'explode' ? 180 : 80,
+            zIndex: 1000,
+            pointerEvents: 'none',
+          }}
+        >
+          <img
+            src="/OtherEffects/BlueSparkle.png"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: animPhase === 'explode'
+                ? 'sparkleSpin 0.15s linear infinite, sparkleExplode 0.9s ease-out forwards'
+                : 'sparkleSpin 0.35s linear infinite',
+            }}
+          />
+        </div>
+      )}
 
       {showMenu && (
         <GameMenuModal title="Menu" onClose={() => setShowMenu(false)}>
