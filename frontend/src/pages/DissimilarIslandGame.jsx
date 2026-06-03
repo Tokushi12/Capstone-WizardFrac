@@ -1069,7 +1069,7 @@ const DissimilarIslandGame = ({
               filter: pulse>0.15 ? `drop-shadow(0 0 ${(pulse*32).toFixed(1)}px rgba(112,55,55,${Math.min(pulse*1.2,1).toFixed(2)}))` : 'none',
               transform:`scale(${(1+pulse*0.07).toFixed(4)})`,
             }}>
-              <div key={getProblemStatement()} className="problem-fade-in" style={{
+              <div key={getProblemStatement()} data-tutorial="problem-box" className="problem-fade-in" style={{
                 position:'relative', background:'#e8d5b4', border:'4px solid #703737',
                 borderRadius:0, padding:'22px 28px', display:'flex', alignItems:'center', gap:'16px',
               }}>
@@ -1120,7 +1120,7 @@ const DissimilarIslandGame = ({
 
             {/* Interactable drawing panel — same structure as Similar Island */}
             <div ref={rectWrapperRef} style={{ flex:1, minHeight:0, overflow:'hidden', display:'flex', alignItems:'flex-end', justifyContent:'center', width:'100%' }}>
-              <div ref={circleContainerRef} style={{
+              <div ref={circleContainerRef} data-tutorial="interactable" style={{
                 width:'400px', height:'440px', flexShrink:0,
                 transform:`scale(${rectScale})`, transformOrigin:'bottom center',
                 background:'none', border:'4px solid #703737', borderRadius:0, boxShadow:'none',
@@ -1585,6 +1585,10 @@ const DissimilarIslandGame = ({
                         </button>
                         ); })()}
                         {/* Hint */}
+                        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                          <div style={{ fontSize:7, fontFamily:'"Press Start 2P", monospace', color:'#fbbf24', textAlign:'center', lineHeight:1.5, textShadow:'0 0 6px rgba(0,0,0,0.9)', whiteSpace:'nowrap' }}>
+                            ⚠ USING HINT WILL<br/>NOT BE RECORDED
+                          </div>
                         <button style={{ padding:'4px 16px', fontSize:10, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor:'pointer', backdropFilter:'blur(6px)' }}>
                           <div style={{position:'absolute',top:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',top:-6,right:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
@@ -1596,6 +1600,7 @@ const DissimilarIslandGame = ({
                           <div style={{position:'absolute',bottom:3,right:3,width:5,height:5,background:'#703737',pointerEvents:'none'}}/>
                           Hint
                         </button>
+                        </div>
                       </div>
                     )}
                   </>

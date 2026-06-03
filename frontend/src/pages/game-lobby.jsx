@@ -481,7 +481,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="islands-grid">
+        <div className="islands-grid" style={{ pointerEvents: animPhase ? 'none' : 'auto' }}>
           {islands.map(island => (
             <div
               key={island.name}
