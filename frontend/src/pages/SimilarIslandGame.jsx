@@ -6,64 +6,7 @@ import SimilarFractionTutorial from '../components/SimilarFractionTutorial';
 import GameMenuModal from '../components/GameMenuModal';
 import '../components/components.css';
 
-// ── Similar Island: same denominator ──────────────────────────────────────
-const buildProblem = (level = 1) => {
-  const minDen   = Math.min(2 + Math.floor((level - 1) / 2), 6);
-  const maxDen   = Math.min(2 + level * 2, 16);
-  const subChance = Math.min(0.1 + (level - 1) * 0.1, 0.6);
-
-  let den, n1, n2, op, resNum, attempts = 0;
-  do {
-    den = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-    n1  = Math.floor(Math.random() * (den - 1)) + 1;
-    n2  = Math.floor(Math.random() * (den - 1)) + 1;
-    op  = Math.random() < subChance ? '-' : '+';
-    if (op === '-' && n1 < n2) [n1, n2] = [n2, n1];
-    resNum = op === '+' ? n1 + n2 : n1 - n2;
-    attempts++;
-  } while (resNum % den === 0 && attempts < 20);
-  // Loop rejects whole-number results; accepts after 20 tries to avoid infinite loop
-
-  return `${n1}/${den} ${op} ${n2}/${den} = ?`;
-};
-
-// ── Dissimilar Island: different denominators (butterfly method) ───────────
-// eslint-disable-next-line no-unused-vars
-const buildProblemDissimilar = (level = 1) => {
-  const minDen = Math.min(2 + Math.floor((level - 1) / 2), 4);
-  const maxDen = Math.min(3 + level * 2, 14);
-  let d1 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  let d2 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  while (d2 === d1) d2 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
-  const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
-  const subChance = Math.min(0.1 + (level - 1) * 0.1, 0.6);
-  const op = Math.random() < subChance ? '-' : '+';
-  // Ensure subtraction result is positive: compare n1/d1 vs n2/d2
-  if (op === '-' && n1 * d2 < n2 * d1) return `${n2}/${d2} ${op} ${n1}/${d1} = ?`;
-  return `${n1}/${d1} ${op} ${n2}/${d2} = ?`;
-};
-
-// ── Hybrid Island: mixed numbers with different denominators ───────────────
-// eslint-disable-next-line no-unused-vars
-const buildProblemHybrid = (level = 1) => {
-  const minDen = Math.min(2 + Math.floor((level - 1) / 2), 4);
-  const maxDen = Math.min(3 + level * 2, 12);
-  const maxWhole = Math.min(1 + Math.floor(level / 2), 5);
-  let d1 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  let d2 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  while (d2 === d1) d2 = Math.floor(Math.random() * (maxDen - minDen + 1)) + minDen;
-  const w1 = Math.floor(Math.random() * maxWhole) + 1;
-  const w2 = Math.floor(Math.random() * maxWhole) + 1;
-  const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
-  const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
-  const subChance = Math.min(0.1 + (level - 1) * 0.1, 0.55);
-  const op = Math.random() < subChance ? '-' : '+';
-  // Ensure left side >= right side for subtraction
-  if (op === '-' && w1 + n1 / d1 < w2 + n2 / d2)
-    return `${w2} ${n2}/${d2} ${op} ${w1} ${n1}/${d1} = ?`;
-  return `${w1} ${n1}/${d1} ${op} ${w2} ${n2}/${d2} = ?`;
-};
+import { buildProblem, buildProblemDissimilar, buildProblemHybrid, getDifficultyParams, TIMING } from '../utils/gameUtils';
 
 // Detects frame count from a horizontal sprite sheet.
 // Square frames (most common): width is an exact multiple of height → frame count = width / height.
@@ -1817,9 +1760,9 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
               <style>{`
                 @keyframes enemyFlash {
                   0%, 100% { filter: brightness(1); }
-                  25%       { filter: brightness(3) saturate(0); }
+                  25%       { filter: brightness(8) saturate(0); }
                   50%       { filter: brightness(1); }
-                  75%       { filter: brightness(3) saturate(0); }
+                  75%       { filter: brightness(8) saturate(0); }
                 }
               `}</style>
               {(() => {
