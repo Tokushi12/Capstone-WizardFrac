@@ -21,6 +21,26 @@ function App() {
   const audioRef = useRef(null);
   const endActionLocked = useRef(false);
 
+  // Cursor sparkle trail
+  useEffect(() => {
+    let last = 0;
+    const onMove = (e) => {
+      const now = Date.now();
+      if (now - last < 35) return;
+      last = now;
+      const el = document.createElement('div');
+      el.className = 'cursor-sparkle';
+      const size = Math.random() * 7 + 4;
+      const ox = (Math.random() - 0.5) * 18;
+      const oy = (Math.random() - 0.5) * 18;
+      el.style.cssText = `left:${e.clientX + ox}px;top:${e.clientY + oy}px;width:${size}px;height:${size}px;`;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove(), { once: true });
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
   // Create the audio instance once
   useEffect(() => {
     const audio = new Audio('/TitleTheme.wav');

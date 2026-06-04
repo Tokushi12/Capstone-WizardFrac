@@ -62,9 +62,9 @@
   position: relative;
   background: #251e59;
   border: 4px solid #f6b825;
-  border-radius: 0;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  padding: 24px 28px 8px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px #18113c, 0 20px 40px rgba(0,0,0,0.6);
+  padding: 36px 56px 28px;
   text-align: center;
   margin: 40px auto 0;
   width: fit-content;
@@ -73,31 +73,31 @@
 .lobby-title-box::before {
   content: '';
   position: absolute;
-  inset: 5px;
+  inset: 8px;
   border: 1px solid #f6b825;
-  border-radius: 0;
+  border-radius: 6px;
   pointer-events: none;
 }
 
 .lobby-title {
   text-align: center;
-  color: white;
+  color: #f6b825;
   font-family: 'Press Start 2P', monospace;
   font-size: clamp(1.2em, 2.2vw, 2.2em);
   margin: 8px 0 10px;
   padding-top: 0;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.3);
-  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(0,0,0,0.6), 2px 2px 6px rgba(0,0,0,0.8);
+  letter-spacing: 6px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .lobby-subtitle {
   text-align: center;
-  color: rgba(255, 255, 255, 0.95);
+  color: #fff;
   font-size: clamp(0.6em, 1vw, 0.9em);
   margin: 0 0 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 0 20px rgba(0,0,0,0.6), 2px 2px 6px rgba(0,0,0,0.8);
   font-weight: 500;
 }
 
