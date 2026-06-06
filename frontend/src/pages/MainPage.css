@@ -3,7 +3,7 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #0a0618;
+  background: #06041a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,6 +19,21 @@
   pointer-events: none;
 }
 
+/* Lightning screen flash overlay */
+.lightning-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: rgba(180, 220, 255, 0);
+  transition: background 0.04s ease-out;
+}
+.lightning-overlay.active {
+  background: rgba(180, 220, 255, 0.22);
+  transition: none;
+}
+
+/* Floating fraction bubbles */
 .frac-bubbles-layer {
   position: absolute;
   inset: 0;
@@ -34,16 +49,16 @@
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  background: rgba(130, 90, 255, 0.13);
-  border: 1px solid rgba(200, 170, 255, 0.28);
+  background: rgba(100, 60, 220, 0.14);
+  border: 1px solid rgba(180, 140, 255, 0.30);
   border-radius: 50px;
   backdrop-filter: blur(5px);
-  color: rgba(230, 215, 255, 0.88);
+  color: rgba(220, 205, 255, 0.88);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 700;
   box-shadow:
-    0 0 14px rgba(160, 120, 255, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 0 14px rgba(130, 90, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
   animation: fracBubbleFloat linear infinite;
   will-change: transform, opacity;
 }
@@ -68,7 +83,7 @@
   width: 100%;
   min-width: 14px;
   height: 1.5px;
-  background: rgba(220, 200, 255, 0.65);
+  background: rgba(210, 190, 255, 0.65);
   margin: 2px 0;
 }
 
@@ -80,31 +95,18 @@
 }
 
 @keyframes fracBubbleFloat {
-  0% {
-    transform: translateY(0) translateX(0);
-    opacity: 0;
-  }
-  8% {
-    opacity: 0.78;
-  }
-  40% {
-    transform: translateY(calc(-40vh - 56px)) translateX(16px);
-  }
-  70% {
-    transform: translateY(calc(-70vh - 98px)) translateX(-14px);
-  }
-  92% {
-    opacity: 0.55;
-  }
-  100% {
-    transform: translateY(calc(-100vh - 200px)) translateX(8px);
-    opacity: 0;
-  }
+  0%   { transform: translateY(0) translateX(0);                          opacity: 0; }
+  8%   { opacity: 0.78; }
+  40%  { transform: translateY(calc(-40vh - 56px)) translateX(16px); }
+  70%  { transform: translateY(calc(-70vh - 98px)) translateX(-14px); }
+  92%  { opacity: 0.55; }
+  100% { transform: translateY(calc(-100vh - 200px)) translateX(8px);     opacity: 0; }
 }
 
+/* Main content */
 .main-content {
   position: relative;
-  z-index: 3;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -127,9 +129,9 @@
   text-transform: uppercase;
   color: #f6b825;
   text-shadow:
-    0 0 20px rgba(246, 184, 37, 0.8),
-    0 0 50px rgba(246, 184, 37, 0.4),
-    3px 3px 8px rgba(0, 0, 0, 0.9);
+    0 0 20px rgba(246, 184, 37, 0.85),
+    0 0 55px rgba(246, 184, 37, 0.45),
+    3px 3px 8px rgba(0, 0, 0, 0.95);
   animation: titlePulse 3s ease-in-out infinite;
 }
 
@@ -139,19 +141,19 @@
   font-weight: 800;
   letter-spacing: 10px;
   text-transform: uppercase;
-  color: #c084fc;
+  color: #a78bfa;
   text-shadow:
-    0 0 16px rgba(192, 132, 252, 0.7),
-    2px 2px 6px rgba(0, 0, 0, 0.8);
+    0 0 18px rgba(167, 139, 250, 0.75),
+    2px 2px 6px rgba(0, 0, 0, 0.85);
 }
 
 .main-tagline {
   margin: 6px 0 0;
   font-size: clamp(0.95em, 1.8vw, 1.4em);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(200, 190, 255, 0.70);
   font-style: italic;
   letter-spacing: 2px;
-  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.85);
 }
 
 .main-start-btn {
@@ -161,23 +163,25 @@
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #fff;
-  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #6d28d9 0%, #3730a3 100%);
+  border: 2px solid rgba(200, 180, 255, 0.30);
   border-radius: 50px;
   cursor: pointer;
   box-shadow:
-    0 0 24px rgba(124, 58, 237, 0.6),
-    0 8px 32px rgba(0, 0, 0, 0.5);
+    0 0 28px rgba(109, 40, 217, 0.65),
+    0 0 60px rgba(55, 48, 163, 0.35),
+    0 8px 32px rgba(0, 0, 0, 0.55);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   animation: btnFloat 4s ease-in-out infinite;
 }
 
 .main-start-btn:hover {
   transform: scale(1.07) translateY(-3px);
-  background: linear-gradient(135deg, #9333ea 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #4338ca 100%);
   box-shadow:
-    0 0 40px rgba(147, 51, 234, 0.8),
-    0 12px 40px rgba(0, 0, 0, 0.6);
+    0 0 45px rgba(124, 58, 237, 0.85),
+    0 0 80px rgba(67, 56, 202, 0.45),
+    0 12px 40px rgba(0, 0, 0, 0.60);
 }
 
 .main-start-btn:active {
@@ -185,8 +189,18 @@
 }
 
 @keyframes titlePulse {
-  0%, 100% { text-shadow: 0 0 20px rgba(246,184,37,0.8), 0 0 50px rgba(246,184,37,0.4), 3px 3px 8px rgba(0,0,0,0.9); }
-  50%       { text-shadow: 0 0 35px rgba(246,184,37,1),   0 0 80px rgba(246,184,37,0.6), 3px 3px 8px rgba(0,0,0,0.9); }
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(246, 184, 37, 0.85),
+      0 0 55px rgba(246, 184, 37, 0.45),
+      3px 3px 8px rgba(0, 0, 0, 0.95);
+  }
+  50% {
+    text-shadow:
+      0 0 38px rgba(246, 184, 37, 1.0),
+      0 0 90px rgba(246, 184, 37, 0.65),
+      3px 3px 8px rgba(0, 0, 0, 0.95);
+  }
 }
 
 @keyframes btnFloat {
