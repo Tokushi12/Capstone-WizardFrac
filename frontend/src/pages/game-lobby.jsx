@@ -3,6 +3,9 @@ import './game-lobby.css';
 import LoadingScreen from '../components/LoadingScreen';
 import IslandInterior from './IslandInterior';
 import GameMenuModal from '../components/GameMenuModal';
+import GameMechanicsIntro from '../components/GameMechanicsIntro';
+
+const MECHANICS_INTRO_KEY = 'wizardfrac_seen_mechanics_intro';
 
 const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart, onOpenDashboard, onEnterIslandInterior, onLeaveIslandInterior, onLogout }) => {
   const [gameProgress, setGameProgress] = useState(null);
@@ -14,6 +17,14 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
   const [character, setCharacter] = useState(selectedCharacter);
   const actionLocked = useRef(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showMechanicsIntro, setShowMechanicsIntro] = useState(
+    () => !localStorage.getItem(MECHANICS_INTRO_KEY)
+  );
+
+  const closeMechanicsIntro = () => {
+    localStorage.setItem(MECHANICS_INTRO_KEY, '1');
+    setShowMechanicsIntro(false);
+  };
   const canvasRef = useRef(null);
   const galaxyFrameRef = useRef(null);
   const titleBoxRef = useRef(null);
@@ -460,6 +471,7 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
       {loading && <LoadingScreen />}
       <div className="lobby-top-right">
         <button className="dashboard-btn" onClick={onOpenDashboard}>Dashboard</button>
+        <button className="logout-btn" onClick={() => setShowMechanicsIntro(true)}>Help</button>
         <button className="logout-btn" onClick={() => setShowMenu(true)}>Menu</button>
       </div>
       <div className="lobby-container">
@@ -548,6 +560,10 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
             }}
           />
         </div>
+      )}
+
+      {showMechanicsIntro && (
+        <GameMechanicsIntro onComplete={closeMechanicsIntro} />
       )}
 
       {showMenu && (
