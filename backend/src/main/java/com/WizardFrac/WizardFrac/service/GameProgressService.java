@@ -98,7 +98,7 @@ public class GameProgressService {
                 map.put("timestamp", attempt.getTimestamp() != null ? attempt.getTimestamp().toString() : null);
                 return map;
             }).toList();
-            
+
             String sessionDataJson = objectMapper.writeValueAsString(attemptsData);
             session.setSessionDataJson(sessionDataJson);
         } catch (Exception e) {
@@ -164,13 +164,13 @@ public class GameProgressService {
         if (progressOpt.isPresent()) {
             return progressOpt;
         }
-        
+
         Optional<Student> studentOpt = studentRepository.findById(studentId);
         if (studentOpt.isPresent()) {
             GameProgress newProgress = new GameProgress(studentOpt.get());
             return Optional.of(gameProgressRepository.save(newProgress));
         }
-        
+
         return Optional.empty();
     }
 
@@ -221,7 +221,7 @@ public class GameProgressService {
     // Get diagnostics data for student
     public DiagnosticsDTO getDiagnostics(Long studentId) {
         List<GameSession> sessions = gameSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId);
-        
+
         List<SpellAttempt> allAttempts = new ArrayList<>();
         for (GameSession session : sessions) {
             allAttempts.addAll(spellAttemptRepository.findByGameSessionIdOrderByTimestamp(session.getId()));
@@ -243,9 +243,9 @@ public class GameProgressService {
 
         double avgMultiplier = allAttempts.isEmpty() ? 1.0 : totalMultiplier / allAttempts.size();
         DiagnosticsDTO.SummaryDTO summary = new DiagnosticsDTO.SummaryDTO(
-            totalCorrect, 
-            totalIncorrect, 
-            sessions.size(), 
+            totalCorrect,
+            totalIncorrect,
+            sessions.size(),
             avgMultiplier
         );
 
@@ -262,7 +262,7 @@ public class GameProgressService {
 
         for (String competencyId : Arrays.asList("SameContainer", "ButterflyMethod", "MixedConversion")) {
             List<SpellAttempt> compAttempts = attemptsByCompetency.getOrDefault(competencyId, new ArrayList<>());
-            
+
             int compCorrect = 0;
             for (SpellAttempt attempt : compAttempts) {
                 if (attempt.getIsCorrect()) compCorrect++;
@@ -284,7 +284,7 @@ public class GameProgressService {
         // Calculate streak history
         List<DiagnosticsDTO.StreakHistoryDTO> streakHistory = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
-        
+
         for (GameSession session : sessions) {
             String dateStr = session.getStartedAt().format(formatter);
             int peakStreak = session.getActiveStreak(); // Simplified
@@ -301,7 +301,37 @@ public class GameProgressService {
             .map(this::toGameplayHistoryDTO)
             .collect(Collectors.toList());
 
-        return new DiagnosticsDTO(competencies, summary, streakHistory, gameHistory);
+        List<DiagnosticsDTO.MisconceptionDTO> dissimilarMisconceptions =
+            getMisconceptionBreakdown(attemptsByCompetency.getOrDefault("ButterflyMethod", new ArrayList<>()));
+
+        return new DiagnosticsDTO(competencies, summary, streakHistory, gameHistory, dissimilarMisconceptions);
+    }
+
+    // UC-2.3 - diagnostic tracking for recurring misconceptions in dissimilar fraction operations
+    private static final Map<String, String> MISCONCEPTION_LABELS = Map.of(
+        "WRONG_CROSS_MULTIPLY_LEFT", "Incorrect cross-multiplication (left numerator x right denominator)",
+        "WRONG_CROSS_MULTIPLY_RIGHT", "Incorrect cross-multiplication (right numerator x left denominator)",
+        "WRONG_DENOMINATOR_PRODUCT", "Error multiplying the denominators",
+        "WRONG_CROSS_PRODUCT_COMBINATION", "Mistake adding/subtracting the cross products",
+        "FAILED_TO_SIMPLIFY", "Failure to simplify to lowest terms"
+    );
+
+    private List<DiagnosticsDTO.MisconceptionDTO> getMisconceptionBreakdown(List<SpellAttempt> dissimilarAttempts) {
+        Map<String, Long> counts = dissimilarAttempts.stream()
+            .filter(a -> !a.getIsCorrect())
+            .map(SpellAttempt::getErrorType)
+            .filter(MISCONCEPTION_LABELS::containsKey)
+            .collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+
+        return counts.entrySet().stream()
+            .map(e -> new DiagnosticsDTO.MisconceptionDTO(
+                e.getKey(),
+                MISCONCEPTION_LABELS.get(e.getKey()),
+                e.getValue().intValue(),
+                e.getValue() >= 2
+            ))
+            .sorted((a, b) -> b.getCount() - a.getCount())
+            .collect(Collectors.toList());
     }
 
     private String getMasteryLevel(double accuracy) {
