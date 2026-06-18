@@ -294,6 +294,94 @@
   font-family: var(--wizard-font);
 }
 
+/* ── Misconceptions ── */
+.misconceptions-section {
+  position: relative;
+  background: var(--wizard-purple);
+  border: 4px solid var(--wizard-gold);
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--wizard-purple-dark), 0 16px 36px rgba(0, 0, 0, 0.5);
+  padding: 1.75rem;
+}
+
+.misconceptions-section::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  border: 1px solid rgba(246, 184, 37, 0.65);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.misconceptions-subtitle {
+  margin: -0.5rem 0 1.25rem;
+  color: var(--wizard-text-muted);
+  font-family: var(--wizard-font);
+  font-size: 0.85rem;
+}
+
+.misconceptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.misconception-row {
+  background: rgba(24, 17, 60, 0.85);
+  border: 2px solid rgba(246, 184, 37, 0.4);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.misconception-row.is-recurring {
+  border-color: #fca5a5;
+}
+
+.misconception-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.misconception-label {
+  font-family: var(--wizard-font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--wizard-text);
+}
+
+.misconception-count {
+  font-family: var(--wizard-font);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--wizard-gold);
+  white-space: nowrap;
+}
+
+.misconception-row.is-recurring .misconception-count {
+  color: #fca5a5;
+}
+
+.misconception-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.misconception-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--wizard-gold), #fca5a5);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
 /* ── History table ── */
 .history-table-wrap {
   overflow-x: auto;
