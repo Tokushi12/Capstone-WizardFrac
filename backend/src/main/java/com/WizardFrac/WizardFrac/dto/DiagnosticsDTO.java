@@ -8,15 +8,26 @@ public class DiagnosticsDTO {
     private SummaryDTO summary;
     private List<StreakHistoryDTO> streakHistory;
     private List<GameplayHistoryDTO> gameHistory;
+    private List<MisconceptionDTO> dissimilarMisconceptions;
 
     public DiagnosticsDTO() {}
 
     public DiagnosticsDTO(List<CompetencyMasteryDTO> competencies, SummaryDTO summary,
-                          List<StreakHistoryDTO> streakHistory, List<GameplayHistoryDTO> gameHistory) {
+                          List<StreakHistoryDTO> streakHistory, List<GameplayHistoryDTO> gameHistory,
+                          List<MisconceptionDTO> dissimilarMisconceptions) {
         this.competencies = competencies;
         this.summary = summary;
         this.streakHistory = streakHistory;
         this.gameHistory = gameHistory;
+        this.dissimilarMisconceptions = dissimilarMisconceptions;
+    }
+
+    public List<MisconceptionDTO> getDissimilarMisconceptions() {
+        return dissimilarMisconceptions;
+    }
+
+    public void setDissimilarMisconceptions(List<MisconceptionDTO> dissimilarMisconceptions) {
+        this.dissimilarMisconceptions = dissimilarMisconceptions;
     }
 
     public List<CompetencyMasteryDTO> getCompetencies() {
@@ -182,6 +193,54 @@ public class DiagnosticsDTO {
 
         public void setPeakStreak(Integer peakStreak) {
             this.peakStreak = peakStreak;
+        }
+    }
+
+    public static class MisconceptionDTO {
+        private String errorType;
+        private String label;
+        private Integer count;
+        private Boolean recurring; // true once the same misconception appears 2+ times
+
+        public MisconceptionDTO() {}
+
+        public MisconceptionDTO(String errorType, String label, Integer count, Boolean recurring) {
+            this.errorType = errorType;
+            this.label = label;
+            this.count = count;
+            this.recurring = recurring;
+        }
+
+        public String getErrorType() {
+            return errorType;
+        }
+
+        public void setErrorType(String errorType) {
+            this.errorType = errorType;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+
+        public void setCount(Integer count) {
+            this.count = count;
+        }
+
+        public Boolean getRecurring() {
+            return recurring;
+        }
+
+        public void setRecurring(Boolean recurring) {
+            this.recurring = recurring;
         }
     }
 }
