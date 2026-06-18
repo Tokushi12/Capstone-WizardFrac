@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CompetencyMasteryCard from '../components/CompetencyMasteryCard';
+import MisconceptionPanel from '../components/MisconceptionPanel';
 import './StudentDashboard.css';
 import LoadingScreen from '../components/LoadingScreen';
 
@@ -40,7 +41,7 @@ const StudentDashboard = ({ studentId, onBack }) => {
     );
   }
 
-  const { summary, competencies, gameHistory } = diagnostics;
+  const { summary, competencies, gameHistory, dissimilarMisconceptions } = diagnostics;
   const hasData = summary.totalSessions > 0;
   const accuracy = summary.totalCorrect + summary.totalIncorrect > 0
     ? Math.round((summary.totalCorrect / (summary.totalCorrect + summary.totalIncorrect)) * 100)
@@ -106,6 +107,9 @@ const StudentDashboard = ({ studentId, onBack }) => {
               </div>
             </div>
           )}
+
+          {/* Misconceptions */}
+          <MisconceptionPanel misconceptions={dissimilarMisconceptions} />
 
           {/* Gameplay history */}
           <div className="history-section">

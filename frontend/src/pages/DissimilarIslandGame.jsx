@@ -349,7 +349,12 @@ const DissimilarIslandGame = ({
                     : last.label === 'N2'     ? `${problem.denominator1} × ${problem.numerator2}`
                     : /* CENTER */ `${problem.denominator2 * problem.numerator1} ${problem.operator} ${problem.denominator1 * problem.numerator2}`;
       const hint = `${formula} = ${last.correct}`;
-      handleWrongAnswer(hint, null, 'INCORRECT_ANSWER');
+      const misconceptionType =
+        last.label === 'SD'     ? 'WRONG_DENOMINATOR_PRODUCT'
+        : last.label === 'N1'   ? 'WRONG_CROSS_MULTIPLY_LEFT'
+        : last.label === 'N2'   ? 'WRONG_CROSS_MULTIPLY_RIGHT'
+        : /* CENTER */            'WRONG_CROSS_PRODUCT_COMBINATION';
+      handleWrongAnswer(hint, last.entered, misconceptionType);
     }, 2900);
 
     // Step 4 (2.9s + 4.5s = 7.4s): popup gone → reset only if player survived
@@ -1023,18 +1028,32 @@ const DissimilarIslandGame = ({
             {currentHint}
           </div>
         )}
-        <button
-          onClick={handleExitGame}
-          style={{
-            padding: '8px 16px', fontSize: 10, fontWeight: 700,
-            fontFamily: '"Press Start 2P", monospace',
-            background: '#e8d5b4', border: '4px solid #703737',
-            borderRadius: 0, color: '#222', cursor: 'pointer', position: 'relative',
-          }}
-        >
-          {corners('#703737')}
-          Menu
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setShowTutorial(true)}
+            style={{
+              padding: '8px 16px', fontSize: 10, fontWeight: 700,
+              fontFamily: '"Press Start 2P", monospace',
+              background: '#e8d5b4', border: '4px solid #703737',
+              borderRadius: 0, color: '#222', cursor: 'pointer', position: 'relative',
+            }}
+          >
+            {corners('#703737')}
+            Help
+          </button>
+          <button
+            onClick={handleExitGame}
+            style={{
+              padding: '8px 16px', fontSize: 10, fontWeight: 700,
+              fontFamily: '"Press Start 2P", monospace',
+              background: '#e8d5b4', border: '4px solid #703737',
+              borderRadius: 0, color: '#222', cursor: 'pointer', position: 'relative',
+            }}
+          >
+            {corners('#703737')}
+            Menu
+          </button>
+        </div>
       </div>
 
       {/* Battle area */}
@@ -1524,7 +1543,27 @@ const DissimilarIslandGame = ({
                               new Audio('/SoundEffects/dissimilarWrong.wav').play().catch(() => {});
                               setCircleShaking(true);
                               setTimeout(() => setCircleShaking(false), 1000);
-                              if (newCount >= 3) triggerCircleFailSequence(updated);
+                              if (newCount >= 3) {
+                                triggerCircleFailSequence(updated);
+                              } else {
+                                // Strikes 1-2 don't cost a life, but still log the misconception
+                                // immediately — otherwise these attempts vanish and never reach the DB.
+                                const misconceptionType =
+                                  label === 'SD' ? 'WRONG_DENOMINATOR_PRODUCT'
+                                  : label === 'N1' ? 'WRONG_CROSS_MULTIPLY_LEFT'
+                                  : label === 'N2' ? 'WRONG_CROSS_MULTIPLY_RIGHT'
+                                  : 'WRONG_CROSS_PRODUCT_COMBINATION';
+                                saveSpellAttempt({
+                                  gameSessionId: gameSession.sessionId,
+                                  mechanicType: 'ButterflyMethod',
+                                  problemStatement: getProblemStatement(),
+                                  answerSubmitted: String(entered),
+                                  correctAnswer: String(correct),
+                                  isCorrect: false, errorType: misconceptionType,
+                                  remainingLives: lives, streakCount: streak, multiplierValue: multiplier,
+                                  enemyHealthBefore: enemyHealth, enemyHealthAfter: enemyHealth, pointsEarned: 0,
+                                });
+                              }
                               return updated;
                             };
                             if (sdActive) {
@@ -1593,9 +1632,13 @@ const DissimilarIslandGame = ({
                                 setTimeout(() => launchFireball(() => { actionLocked.current = false; handleAnswerSubmit({ numerator: String(fSNum), denominator: String(fSDen), skipAnim: true }); }), 500);
                               } else {
                                 const willDie = lives <= 1;
+                                const enteredRawMatch = fIsWhole
+                                  ? parseInt(finalNumInput) === fRawNum && fRawDen === 1
+                                  : parseInt(finalNumInput) === fRawNum && parseInt(finalDenInput) === fRawDen;
+                                const finalMisconceptionType = (fG > 1 && enteredRawMatch) ? 'FAILED_TO_SIMPLIFY' : 'INCORRECT_ANSWER';
                                 setTimeout(() => {
                                   actionLocked.current = false;
-                                  handleWrongAnswer(`${fSNum}${fIsWhole ? '' : '/' + fSDen}`, null, 'INCORRECT_ANSWER');
+                                  handleWrongAnswer(`${fSNum}${fIsWhole ? '' : '/' + fSDen}`, `${finalNumInput}${finalDenInput ? '/' + finalDenInput : ''}`, finalMisconceptionType);
                                   if (!willDie) {
                                     setTimeout(() => {
                                       setCircleDetected(false); setInteractableVisible(true);
