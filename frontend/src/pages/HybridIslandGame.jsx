@@ -8,12 +8,12 @@ import './game.css';
 const FractionBox = ({ whole, num, den }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
     {whole > 0 && (
-      <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', textShadow: '1px 1px 4px #000' }}>{whole}</span>
+      <span style={{ fontSize: 28, fontWeight: 800, color: '#222' }}>{whole}</span>
     )}
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: 50, height: 36, border: '2px solid rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#fff', textShadow: '1px 1px 3px #000' }}>{num}</div>
-      <div style={{ width: 62, height: 3, background: '#fff', margin: '3px 0', borderRadius: 2 }} />
-      <div style={{ width: 50, height: 36, border: '2px solid rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#fff', textShadow: '1px 1px 3px #000' }}>{den}</div>
+      <span style={{ fontSize: 28, fontWeight: 800, color: '#222', minWidth: 40, textAlign: 'center' }}>{num}</span>
+      <div style={{ width: 50, height: 3, background: '#222', borderRadius: 2, margin: '3px 0' }} />
+      <span style={{ fontSize: 28, fontWeight: 800, color: '#222', minWidth: 40, textAlign: 'center' }}>{den}</span>
     </div>
   </div>
 );
@@ -165,35 +165,35 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
 
   // ── token styles ──
   const token = (extra = {}) => ({
-    width: 52, height: 52, borderRadius: 10,
+    width: 52, height: 52, borderRadius: 0,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 24, fontWeight: 800, border: '2px solid',
+    fontSize: 24, fontWeight: 800, border: '3px solid', fontFamily: '"Press Start 2P", monospace',
     userSelect: 'none', transition: 'all 0.2s', ...extra,
   });
 
   const wholeStyle = () => {
-    const base = token({ background: '#0f2a50', borderColor: '#3a7abb', color: '#a0cfff' });
+    const base = token({ background: '#e8d5b4', borderColor: '#703737', color: '#222' });
     if (frac.step === 'ask_sum' || frac.step === 'ask_sum_input')
-      return { ...base, background: '#1a3a1a', borderColor: '#4caf50', color: '#80ff80', cursor: 'grab' };
+      return { ...base, background: '#dff0d8', borderColor: '#4caf50', color: '#1a3a1a', cursor: 'grab' };
     if (dropHighlight && dragTarget === 'den')
-      return { ...base, borderColor: '#e94560', transform: 'scale(1.1)', boxShadow: '0 0 0 3px rgba(233,69,96,0.35)' };
+      return { ...base, borderColor: '#b91c1c', transform: 'scale(1.1)', boxShadow: '0 0 0 3px rgba(185,28,28,0.35)' };
     return base;
   };
 
   const numStyle = () => {
-    const base = token({ background: '#0f2a20', borderColor: '#3a8a3a', color: '#a0f0a0' });
+    const base = token({ background: '#e8d5b4', borderColor: '#703737', color: '#222' });
     if (dropHighlight && dragTarget === 'product')
-      return { ...base, borderColor: '#e94560', transform: 'scale(1.1)', boxShadow: '0 0 0 3px rgba(233,69,96,0.35)' };
+      return { ...base, borderColor: '#b91c1c', transform: 'scale(1.1)', boxShadow: '0 0 0 3px rgba(185,28,28,0.35)' };
     if (frac.step === 'done')
-      return { ...base, background: '#1a3a1a', borderColor: '#4caf50', color: '#80ff80' };
+      return { ...base, background: '#dff0d8', borderColor: '#4caf50', color: '#1a3a1a' };
     return base;
   };
 
   const denStyle = () => {
     const draggable = frac.step === 'drag_den';
     return token({
-      background: '#1a1a00', borderColor: draggable ? '#f5a623' : '#555',
-      color: draggable ? '#f5a623' : '#888',
+      background: '#e8d5b4', borderColor: draggable ? '#703737' : '#cbb796',
+      color: draggable ? '#703737' : '#a89578',
       cursor: draggable ? 'grab' : 'default',
       opacity: isDragging && dragTarget === 'den' ? 0.35 : 1,
       animation: draggable ? 'forgePulseDen 1.5s ease-in-out infinite' : 'none',
@@ -212,13 +212,13 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
       <style>{`
         @keyframes forgePulseDen {
-          0%,100% { box-shadow: 0 0 0 0 rgba(245,166,35,0.6); }
-          50%      { box-shadow: 0 0 0 8px rgba(245,166,35,0); }
+          0%,100% { box-shadow: 0 0 0 0 rgba(112,55,55,0.6); }
+          50%      { box-shadow: 0 0 0 8px rgba(112,55,55,0); }
         }
       `}</style>
 
       {/* Step label */}
-      <div style={{ fontSize: 12, color: '#f5a623', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }}>
+      <div style={{ fontSize: 15, color: '#703737', fontFamily: '"Press Start 2P", monospace', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
         ⚒ {frac.step !== 'done' ? `Converting fraction ${fracIndex + 1} of 2` : `Fraction ${fracIndex + 1} forged!`}
       </div>
 
@@ -226,8 +226,8 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
       <div style={{ display: 'flex', gap: 8 }}>
         {[0, 1].map(i => (
           <div key={i} style={{
-            width: 10, height: 10, borderRadius: '50%',
-            background: i < fracIndex ? '#4caf50' : i === fracIndex ? '#f5a623' : '#2a2a5a',
+            width: 10, height: 10, borderRadius: 0,
+            background: i < fracIndex ? '#4caf50' : i === fracIndex ? '#703737' : '#cbb796',
             transition: 'all 0.3s',
           }} />
         ))}
@@ -263,9 +263,9 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
 
       {/* Hint */}
       <div style={{
-        fontSize: 13, color: hintMsg ? '#e94560' : '#8892b0',
-        background: '#1a1a2e', borderRadius: 8, padding: '6px 14px',
-        border: `1px solid ${hintMsg ? '#e94560' : '#2a2a5a'}`,
+        fontSize: 13, fontFamily: '"Press Start 2P", monospace', color: hintMsg ? '#b91c1c' : '#222',
+        background: '#e8d5b4', borderRadius: 0, padding: '8px 14px',
+        border: `2px solid ${hintMsg ? '#b91c1c' : '#703737'}`,
         minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.3s', textAlign: 'center',
       }}>
@@ -275,7 +275,7 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
       {/* Input row */}
       {(frac.step === 'ask_product' || frac.step === 'ask_sum_input') && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ color: '#eaeaea', fontWeight: 700, fontSize: 15 }}>
+          <span style={{ color: '#222', fontWeight: 700, fontSize: 15, fontFamily: '"Press Start 2P", monospace' }}>
             {frac.step === 'ask_product' ? `${d} × ${w} =` : `${frac.product} + ${n} =`}
           </span>
           <input
@@ -286,17 +286,17 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
             onKeyDown={handleKeyDown}
             style={{
               width: 68, height: 44, textAlign: 'center',
-              fontSize: 20, fontWeight: 800,
-              background: '#0a1628',
-              border: `2px solid ${inputError ? '#e94560' : '#3a5a8a'}`,
-              borderRadius: 10, color: '#eaeaea', outline: 'none',
+              fontSize: 20, fontWeight: 800, fontFamily: '"Press Start 2P", monospace',
+              background: 'transparent',
+              border: `3px dashed ${inputError ? '#b91c1c' : '#222'}`,
+              borderRadius: 0, color: '#222', outline: 'none',
             }}
           />
           <button
             onClick={frac.step === 'ask_product' ? checkProduct : checkSum}
             style={{
-              padding: '8px 16px', background: '#f5a623', color: '#1a1000',
-              border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              padding: '8px 16px', background: '#703737', color: '#e8d5b4', fontFamily: '"Press Start 2P", monospace',
+              border: '4px solid #703737', borderRadius: 0, fontWeight: 800, fontSize: 13, cursor: 'pointer',
             }}
           >
             ⚒ Forge
@@ -309,8 +309,8 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
         <button
           onClick={advanceFraction}
           style={{
-            padding: '10px 28px', background: '#4caf50', color: '#001a00',
-            border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            padding: '10px 28px', background: '#703737', color: '#e8d5b4', fontFamily: '"Press Start 2P", monospace',
+            border: '4px solid #703737', borderRadius: 0, fontWeight: 800, fontSize: 13, cursor: 'pointer',
           }}
         >
           {fracIndex === 0 ? 'Next Fraction →' : 'Start Solving →'}
@@ -321,10 +321,10 @@ const MixedForgePanel = ({ problem, onForgeComplete, onWrongAnswer }) => {
       {isDragging && (
         <div style={{
           position: 'fixed', left: floatPos.x, top: floatPos.y,
-          width: 52, height: 52, borderRadius: 10,
-          background: '#0f3460', border: '2px solid #f5a623',
+          width: 52, height: 52, borderRadius: 0,
+          background: '#e8d5b4', border: '3px solid #703737',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 800, color: '#f5a623',
+          fontSize: 24, fontWeight: 800, color: '#703737', fontFamily: '"Press Start 2P", monospace',
           pointerEvents: 'none', zIndex: 9999,
           boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
         }}>
@@ -407,8 +407,29 @@ const HybridIslandGame = ({
 
   const renderHearts = (count, max) =>
     Array.from({ length: max }, (_, i) => (
-      <span key={i} style={{ fontSize: 22 }}>{i < count ? '❤️' : '🤍'}</span>
+      <img
+        key={i}
+        src="/InteractableUI/HeartSprite.png"
+        alt="heart"
+        style={{
+          width: 24, height: 24, objectFit: 'contain',
+          opacity: i < count ? 1 : 0.25,
+          filter: i < count ? 'none' : 'grayscale(1)',
+        }}
+      />
     ));
+
+  const corners = (color) => (
+    <>
+      <div style={{ position: 'absolute', inset: 5, border: `1px solid ${color}`, pointerEvents: 'none' }} />
+      {[[-6,-6],[null,-6],[-6,null],[null,null]].map(([t,l],i) => (
+        <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:10, height:10, background:color, ...(t!==null?{top:t}:{bottom:-6}), ...(l!==null?{left:l}:{right:-6}) }}/>
+      ))}
+      {[[3,3],[null,3],[3,null],[null,null]].map(([t,l],i) => (
+        <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:5, height:5, background:color, ...(t!==null?{top:t}:{bottom:3}), ...(l!==null?{left:l}:{right:3}) }}/>
+      ))}
+    </>
+  );
 
   // ── API ──
   const saveSpellAttempt = async (attempt) => {
@@ -534,47 +555,60 @@ const HybridIslandGame = ({
   return (
     <div
       className="game-container dissimilar-island"
-      style={{ minHeight: '100vh', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '1200px', margin: '0 auto' }}
+      style={{
+        minHeight: '100vh', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px',
+        maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box',
+        fontFamily: '"Press Start 2P", monospace', fontSize: '13px',
+        background: 'linear-gradient(180deg, #4a3322 0%, #2e2014 100%)',
+      }}
     >
       {/* Header */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: '6px',
-        background: 'rgba(0,0,0,0.55)', padding: '10px 16px',
-        borderRadius: '10px', border: '2px solid rgba(255,255,255,0.3)',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button style={{ padding: '8px 20px', background: '#bbb', border: '2px solid #888', borderRadius: '6px' }}>
-            Game Logo
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', color: '#fff', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 'bold' }}>{studentNickname || 'Player'}</span>
-            <span>HP: {renderHearts(playerHealth, 3)}</span>
-            <span>Streak: x{multiplier.toFixed(1)}</span>
-            <span>Score: {score}</span>
-            <span>Level: {gameSession.level || 1}/7</span>
-          </div>
-          <button
-            style={{ padding: '8px 20px', background: '#bbb', border: '2px solid #888', borderRadius: '6px', cursor: 'pointer' }}
-            onClick={handleExitGame}
-          >
-            Menu
-          </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', padding: '8px 0', gap: '10px' }}>
+        <div style={{ position: 'relative', border: '4px solid #703737', background: '#e8d5b4', padding: '8px 16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+          {corners('#703737')}
+          <span style={{ color: '#222', fontSize: '13px' }}>Streak: x{multiplier.toFixed(1)}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Score: {score}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Level: {gameSession.level || 1}/7</span>
         </div>
-        <div style={{ fontSize: '13px', color: '#fef3c7', minHeight: '18px' }}>
+
+        <div style={{
+          position: 'relative', border: '4px solid #fff', background: '#000', color: '#fff',
+          fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 16px', flex: 1, whiteSpace: 'nowrap',
+        }}>
+          {corners('#fff')}
           💡 {currentHint || (forgePhase === 'forge' ? 'Convert the mixed fractions first!' : 'Solve using the butterfly method!')}
         </div>
+
+        <button
+          onClick={handleExitGame}
+          style={{
+            position: 'relative', padding: '8px 16px', fontSize: 13, fontWeight: 700,
+            fontFamily: '"Press Start 2P", monospace', background: '#e8d5b4', border: '4px solid #703737',
+            borderRadius: 0, color: '#222', cursor: 'pointer',
+          }}
+        >
+          {corners('#703737')}
+          Menu
+        </button>
       </div>
 
-      {/* Hearts + problem banner */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(playerHealth, 3)}</div>
-        <div key={`${problem.whole1}-${problem.numerator1}-${problem.denominator1}-${problem.whole2}-${problem.numerator2}-${problem.denominator2}`} className="problem-fade-in" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      {/* Problem banner */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div
+          key={`${problem.whole1}-${problem.numerator1}-${problem.denominator1}-${problem.whole2}-${problem.numerator2}-${problem.denominator2}`}
+          className="problem-fade-in"
+          style={{
+            position: 'relative', background: '#e8d5b4', border: '4px solid #703737', borderRadius: 0,
+            padding: '22px 28px', display: 'flex', alignItems: 'center', gap: 16,
+          }}
+        >
+          {corners('#703737')}
           <FractionBox whole={problem.whole1} num={problem.numerator1} den={problem.denominator1} />
-          <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', textShadow: '1px 1px 4px #000' }}>{problem.operator}</span>
+          <span style={{ fontSize: 32, fontWeight: 800, color: '#222' }}>{problem.operator}</span>
           <FractionBox whole={problem.whole2} num={problem.numerator2} den={problem.denominator2} />
-          <span style={{ fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>= ?</span>
+          <span style={{ fontSize: 28, fontWeight: 800, color: '#555' }}>= ?</span>
         </div>
-        <div style={{ display: 'flex', gap: '4px' }}>{renderHearts(enemyLives, 3)}</div>
       </div>
 
       {/* Battle area */}
@@ -583,28 +617,36 @@ const HybridIslandGame = ({
         {/* Player */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '150px', height: '150px', border: '2px solid rgba(255,255,255,0.5)',
-            borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center',
-            background: 'rgba(255,255,255,0.15)',
+            width: '150px', height: '150px', border: '4px solid #703737',
+            borderRadius: 0, display: 'flex', justifyContent: 'center', alignItems: 'center',
+            background: 'rgba(232,213,180,0.15)',
           }}>
             <img src={characterSrc} alt="Player" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
           </div>
-          <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px', textShadow: '1px 1px 3px #000' }}>Player</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', border: '4px solid #fff', background: '#000', padding: '6px 18px', color: '#fff', fontSize: '14px', fontWeight: 700 }}>
+              {corners('#fff')}{studentNickname || 'Player'}
+            </div>
+            <div style={{ position: 'relative', border: '4px solid #fff', background: '#000', padding: '6px 10px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+              {corners('#fff')}{renderHearts(playerHealth, 3)}
+            </div>
+          </div>
         </div>
 
         {/* Center panel */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{
+            position: 'relative',
             width: '500px',
-            background: 'rgba(255,255,255,0.92)',
-            border: '4px dashed rgba(255,255,255,0.8)',
-            borderRadius: '20px', padding: '16px',
+            background: '#e8d5b4',
+            border: '4px solid #703737',
+            borderRadius: 0, padding: '16px',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px',
           }}>
+            {corners('#703737')}
             {forgePhase === 'forge' ? (
               <div style={{
-                width: '100%', background: '#1a1a2e', borderRadius: 14,
-                padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
               }}>
                 <MixedForgePanel problem={problem} onForgeComplete={handleForgeComplete} onWrongAnswer={handleWrongAnswer} />
               </div>
@@ -627,9 +669,9 @@ const HybridIslandGame = ({
         {/* Enemy */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '150px', height: '150px', border: '2px solid rgba(255,255,255,0.5)',
-            borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center',
-            background: 'rgba(255,255,255,0.15)',
+            width: '150px', height: '150px', border: '4px solid #703737',
+            borderRadius: 0, display: 'flex', justifyContent: 'center', alignItems: 'center',
+            background: 'rgba(232,213,180,0.15)',
           }}>
             <img
               src="/enemy1.png" alt="Enemy"
@@ -640,7 +682,14 @@ const HybridIslandGame = ({
               }}
             />
           </div>
-          <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px', textShadow: '1px 1px 3px #000' }}>Enemy</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', border: '4px solid #fff', background: '#000', padding: '6px 18px', color: '#fff', fontSize: '14px', fontWeight: 700 }}>
+              {corners('#fff')}Enemy
+            </div>
+            <div style={{ position: 'relative', border: '4px solid #fff', background: '#000', padding: '6px 10px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+              {corners('#fff')}{renderHearts(enemyLives, 3)}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -650,10 +699,12 @@ const HybridIslandGame = ({
           <button
             onClick={() => butterflyPanelRef.current?.submitCurrentStep()}
             style={{
-              padding: '10px 40px', fontSize: '18px', fontWeight: 'bold',
-              background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
+              position: 'relative', padding: '10px 40px', fontSize: '13px', fontWeight: 700,
+              fontFamily: '"Press Start 2P", monospace',
+              background: '#703737', color: '#e8d5b4', border: '4px solid #703737', borderRadius: 0, cursor: 'pointer',
             }}
           >
+            {corners('#703737')}
             Cast Spell
           </button>
         </div>
@@ -662,11 +713,13 @@ const HybridIslandGame = ({
       {/* Feedback */}
       {feedback && (
         <div style={{
-          textAlign: 'center', padding: '16px', borderRadius: '8px', border: '2px solid #888',
-          background: feedbackType === 'correct' ? '#d4edda' : '#f8d7da',
-          color:      feedbackType === 'correct' ? '#155724' : '#721c24',
-          fontWeight: 'bold',
+          position: 'fixed', left: '50%', zIndex: 5000, textAlign: 'center', padding: '10px 24px',
+          border: '4px solid #fff', background: '#000',
+          color: feedbackType === 'correct' ? '#4ade80' : '#f87171',
+          fontSize: '15px', fontWeight: 700, whiteSpace: 'nowrap',
+          animation: 'feedbackSlideToCenter 0.6s ease-out forwards',
         }}>
+          {corners('#fff')}
           {feedback}
         </div>
       )}
@@ -685,15 +738,15 @@ const HybridIslandGame = ({
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}>
           <div style={{
-            position: 'relative', background: '#251e59',
-            border: '4px solid #f6b825', borderRadius: '12px',
-            boxShadow: '0 0 0 2px #18113c, 0 20px 40px rgba(0,0,0,0.6)',
+            position: 'relative', background: '#e8d5b4',
+            border: '4px solid #703737', borderRadius: '12px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
             padding: '36px 56px 28px', textAlign: 'center',
           }}>
-            <div style={{ position: 'absolute', top: 8, right: 8, bottom: 8, left: 8, border: '1px solid #f6b825', borderRadius: '6px', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 8, right: 8, bottom: 8, left: 8, border: '1px solid #703737', borderRadius: '6px', pointerEvents: 'none' }} />
             <h1 style={{ fontSize: 'clamp(2.5em, 6vw, 5em)', fontWeight: 900, margin: 0, color: '#ef4444', textShadow: '0 0 20px rgba(0,0,0,0.6), 2px 2px 6px rgba(0,0,0,0.8)', letterSpacing: '6px', textTransform: 'uppercase' }}>DEFEAT!</h1>
-            <p style={{ fontSize: 'clamp(1em, 2vw, 1.3em)', color: '#fff', margin: '36px 0 0', fontWeight: 500 }}>You ran out of hearts!</p>
-            <p style={{ fontSize: 'clamp(1.1em, 2vw, 1.6em)', color: '#fff', margin: '12px 0 0', fontWeight: 700 }}>Score: {score}</p>
+            <p style={{ fontSize: 'clamp(1em, 2vw, 1.3em)', color: '#333', margin: '36px 0 0', fontWeight: 500 }}>You ran out of hearts!</p>
+            <p style={{ fontSize: 'clamp(1.1em, 2vw, 1.6em)', color: '#333', margin: '12px 0 0', fontWeight: 700 }}>Score: {score}</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
             <button onClick={onExitToLobby} style={{ padding: '12px 28px', fontSize: '15px', fontWeight: 700, background: 'rgba(40,40,40,0.8)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '10px', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
