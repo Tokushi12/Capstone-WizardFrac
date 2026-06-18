@@ -827,7 +827,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
         overflow: 'hidden',
         padding: '20px 20px 0',
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '11px',
+        fontSize: '13px',
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -864,9 +864,9 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
           <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: '#703737' }} />
           <div style={{ position: 'absolute', bottom: 3, left: 3, width: 5, height: 5, background: '#703737' }} />
           <div style={{ position: 'absolute', bottom: 3, right: 3, width: 5, height: 5, background: '#703737' }} />
-          <span style={{ color: '#222', fontSize: '10px' }}>Streak: x{multiplier.toFixed(1)}</span>
-          <span style={{ color: '#222', fontSize: '10px' }}>Score: {score}</span>
-          <span style={{ color: '#222', fontSize: '10px' }}>Level: {gameSession.level}/{totalLevels ?? '...'}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Streak: x{multiplier.toFixed(1)}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Score: {score}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Level: {gameSession.level}/{totalLevels ?? '...'}</span>
         </div>
 
         {/* Hint display in header — glows white then settles to white-border + black */}
@@ -878,7 +878,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
               border: '4px solid #fff',
               background: '#000',
               color: '#fff',
-              fontSize: '10px', fontWeight: 700,
+              fontSize: '13px', fontWeight: 700,
               fontFamily: '"Press Start 2P", monospace',
               display: 'flex', alignItems: 'center', padding: '0 12px', margin: '0 88px',
               animation: 'hintReveal 0.8s ease-out forwards',
@@ -907,7 +907,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
           onClick={handleExitGame}
           style={{
             padding: '8px 16px',
-            fontSize: 10, fontWeight: 700,
+            fontSize: 13, fontWeight: 700,
             fontFamily: '"Press Start 2P", monospace',
             background: '#e8d5b4',
             border: '4px solid #703737',
@@ -1432,7 +1432,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                       borderRadius: 0,
                       boxShadow: 'none',
                       position: 'relative',
-                      fontSize: 11, fontWeight: 700,
+                      fontSize: 13, fontWeight: 700,
                       fontFamily: '"Press Start 2P", monospace',
                       cursor: checkButtonReady && (simplifiedResultIsWhole ? simplifiedInput : simplifiedInput && simplifiedDenInput) ? 'pointer' : 'not-allowed',
                       color: '#e8d5b4',
@@ -1492,7 +1492,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                       onClick={() => setShowHintConfirm(true)}
                       style={{
                         padding: '4px 16px',
-                        fontSize: 10, fontWeight: 700,
+                        fontSize: 13, fontWeight: 700,
                         fontFamily: '"Press Start 2P", monospace',
                         background: '#703737',
                         border: '4px solid #703737',
@@ -1623,7 +1623,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                       ) : (
                         /* Phase 2 — simplified fraction input */
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, animation: 'problemFadeIn 0.4s ease-out' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: '"Press Start 2P", monospace', textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}>Final Answer:</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: '"Press Start 2P", monospace', textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}>Final Answer:</span>
                           {simplifiedResultIsWhole ? (
                             /* Whole number — single field */
                             <input
@@ -1786,7 +1786,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                     fontFamily: '"Press Start 2P", monospace', color: '#f87171',
                   }}>
                     <span style={{ fontSize: 36 }}>???</span>
-                    <span style={{ fontSize: 9, textAlign: 'center', lineHeight: 1.6 }}>Missing<br/>Sprite</span>
+                    <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.6 }}>Missing<br/>Sprite</span>
                   </div>
                 );
                 return (
@@ -1850,7 +1850,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
                 <div style={{ position: 'absolute', bottom: 3, left: 3, width: 5, height: 5, background: '#fff' }} />
                 <div style={{ position: 'absolute', bottom: 3, right: 3, width: 5, height: 5, background: '#fff' }} />
                 <img src="/InteractableUI/HeartSprite.png" alt="hp" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: '13px' }}>x{enemyLives}</span>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>x{enemyLives}</span>
               </div>
             </div>
           </div>
@@ -1868,7 +1868,7 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
           border: '4px solid #fff',
           background: '#000',
           color: feedbackType === 'correct' ? '#4ade80' : '#f87171',
-          fontSize: '11px', fontWeight: 700,
+          fontSize: '15px', fontWeight: 700,
           whiteSpace: 'nowrap',
           animation: 'feedbackSlideToCenter 0.6s ease-out forwards',
         }}>
@@ -2015,16 +2015,16 @@ const SimilarIslandGame = ({ studentId, studentNickname, selectedCharacter, game
             {[[-6,-6],[null,-6],[-6,null],[null,null]].map(([t,l],i)=>(
               <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:12, height:12, background:'#703737', ...(t!==null?{top:t}:{bottom:-6}), ...(l!==null?{left:l}:{right:-6}) }}/>
             ))}
-            <p style={{ fontSize:11, fontWeight:700, color:'#703737', margin:'0 0 16px', lineHeight:1.8 }}>USE A HINT?</p>
-            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c', fontWeight:900}}>reduce your score</span> for this problem.</p>
-            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c', fontWeight:900}}>not be fully recorded</span> in your progress.</p>
+            <p style={{ fontSize:14, fontWeight:700, color:'#703737', margin:'0 0 16px', lineHeight:1.8 }}>USE A HINT?</p>
+            <p style={{ fontSize:11, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c', fontWeight:900}}>reduce your score</span> for this problem.</p>
+            <p style={{ fontSize:11, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c', fontWeight:900}}>not be fully recorded</span> in your progress.</p>
             <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
               <button onClick={() => { recordHintUsed(); if (finalAnswerVisible) { setPhase2HintUsed(true); } else { setHintUsed(true); } setFormulaVisible(true); setShowHintConfirm(false); }}
-                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
+                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:12, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
                 YES, SHOW HINT
               </button>
               <button onClick={() => setShowHintConfirm(false)}
-                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#e8d5b4', border:'4px solid #703737', color:'#703737', cursor:'pointer', borderRadius:0 }}>
+                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:12, background:'#e8d5b4', border:'4px solid #703737', color:'#703737', cursor:'pointer', borderRadius:0 }}>
                 CANCEL
               </button>
             </div>

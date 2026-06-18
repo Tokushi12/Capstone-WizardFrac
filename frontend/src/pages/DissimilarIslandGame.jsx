@@ -982,7 +982,7 @@ const DissimilarIslandGame = ({
       style={{
         position: 'relative', height: '100svh', overflow: 'hidden',
         padding: '20px 20px 0', fontFamily: '"Press Start 2P", monospace',
-        fontSize: '11px', display: 'flex', flexDirection: 'column',
+        fontSize: '13px', display: 'flex', flexDirection: 'column',
         gap: '10px', boxSizing: 'border-box',
       }}
     >
@@ -1004,14 +1004,14 @@ const DissimilarIslandGame = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', padding: '8px 0', gap: '10px', position: 'relative', zIndex: 1 }}>
         <div style={{ position: 'relative', border: '4px solid #703737', background: '#e8d5b4', padding: '8px 16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
           {corners('#703737')}
-          <span style={{ color: '#222', fontSize: '10px' }}>Streak: x{multiplier.toFixed(1)}</span>
-          <span style={{ color: '#222', fontSize: '10px' }}>Score: {score}</span>
-          <span style={{ color: '#222', fontSize: '10px' }}>Level: {gameSession.level}/{totalLevels ?? '...'}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Streak: x{multiplier.toFixed(1)}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Score: {score}</span>
+          <span style={{ color: '#222', fontSize: '13px' }}>Level: {gameSession.level}/{totalLevels ?? '...'}</span>
         </div>
         {currentHint && (
           <div key={currentHint} style={{
             position:'relative', border:'4px solid #fff', background:'#000', color:'#fff',
-            fontSize:'10px', fontWeight:700, fontFamily:'"Press Start 2P", monospace',
+            fontSize:'13px', fontWeight:700, fontFamily:'"Press Start 2P", monospace',
             display:'flex', alignItems:'center', padding:'0 8px', margin:'0 100px',
             animation:'hintReveal 0.8s ease-out forwards', whiteSpace:'nowrap',
             flex:1, justifyContent:'center',
@@ -1032,7 +1032,7 @@ const DissimilarIslandGame = ({
           <button
             onClick={() => setShowTutorial(true)}
             style={{
-              padding: '8px 16px', fontSize: 10, fontWeight: 700,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700,
               fontFamily: '"Press Start 2P", monospace',
               background: '#e8d5b4', border: '4px solid #703737',
               borderRadius: 0, color: '#222', cursor: 'pointer', position: 'relative',
@@ -1044,7 +1044,7 @@ const DissimilarIslandGame = ({
           <button
             onClick={handleExitGame}
             style={{
-              padding: '8px 16px', fontSize: 10, fontWeight: 700,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700,
               fontFamily: '"Press Start 2P", monospace',
               background: '#e8d5b4', border: '4px solid #703737',
               borderRadius: 0, color: '#222', cursor: 'pointer', position: 'relative',
@@ -1477,7 +1477,7 @@ const DissimilarIslandGame = ({
                       return (
                         <div style={{ position:'absolute', top:'32px', left:0, right:0, height:'300px', display:'flex', alignItems:'center', justifyContent:'center', animation:'magicFloat 4s ease-in-out infinite', zIndex:10 }}>
                           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, animation:'numFadeIn 0.5s ease-out both' }}>
-                            <span style={{ fontSize:9, fontWeight:700, color:'#fff', fontFamily:'"Press Start 2P", monospace', textShadow:'1px 1px 4px rgba(0,0,0,0.7)', whiteSpace:'nowrap' }}>Final Answer:</span>
+                            <span style={{ fontSize:13, fontWeight:700, color:'#fff', fontFamily:'"Press Start 2P", monospace', textShadow:'1px 1px 4px rgba(0,0,0,0.7)', whiteSpace:'nowrap' }}>Final Answer:</span>
                             {isWhole ? (
                               <input ref={finalNumRef} type="text" inputMode="numeric" value={finalNumInput}
                                 onChange={e => setFinalNumInput(e.target.value.replace(/[^0-9-]/g,''))}
@@ -1663,7 +1663,7 @@ const DissimilarIslandGame = ({
                               }
                             }
                           }}
-                          style={{ padding:'4px 56px', fontSize:10, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor: active ? 'pointer' : 'default', opacity: active ? 1 : 0.4, backdropFilter:'blur(6px)', whiteSpace:'nowrap' }}>
+                          style={{ padding:'4px 56px', fontSize:13, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor: active ? 'pointer' : 'default', opacity: active ? 1 : 0.4, backdropFilter:'blur(6px)', whiteSpace:'nowrap' }}>
                           <div style={{position:'absolute',top:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',top:-6,right:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',bottom:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
@@ -1679,7 +1679,7 @@ const DissimilarIslandGame = ({
                         {!hintUsed && <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                         <button
                           onClick={() => setShowHintConfirm(true)}
-                          style={{ padding:'4px 16px', fontSize:10, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor:'pointer', backdropFilter:'blur(6px)' }}>
+                          style={{ padding:'4px 16px', fontSize:13, fontWeight:700, fontFamily:'"Press Start 2P", monospace', background:'#703737', border:'4px solid #703737', borderRadius:0, boxShadow:'none', position:'relative', color:'#e8d5b4', cursor:'pointer', backdropFilter:'blur(6px)' }}>
                           <div style={{position:'absolute',top:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',top:-6,right:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
                           <div style={{position:'absolute',bottom:-6,left:-6,width:10,height:10,background:'#703737',pointerEvents:'none'}}/>
@@ -1772,7 +1772,7 @@ const DissimilarIslandGame = ({
               <div style={{ position:'relative', border:'4px solid #fff', background:'#000', padding:'6px 10px', display:'flex', gap:'4px', alignItems:'center' }}>
                 {corners('#fff')}
                 <img src="/InteractableUI/HeartSprite.png" alt="hp" style={{ width:24, height:24, objectFit:'contain' }} />
-                <span style={{ color:'#fff', fontWeight:700, fontSize:'13px' }}>x{enemyLives}</span>
+                <span style={{ color:'#fff', fontWeight:700, fontSize:'15px' }}>x{enemyLives}</span>
               </div>
             </div>
           </div>
@@ -1786,7 +1786,7 @@ const DissimilarIslandGame = ({
           textAlign:'center', padding:'10px 24px',
           border:'4px solid #fff', background:'#000',
           color: feedbackType==='correct' ? '#4ade80' : '#f87171',
-          fontSize:'11px', fontWeight:700, whiteSpace:'nowrap',
+          fontSize:'15px', fontWeight:700, whiteSpace:'nowrap',
           animation:'feedbackSlideToCenter 0.6s ease-out forwards',
         }}>
           {corners('#fff')}{feedback}
@@ -1882,9 +1882,9 @@ const DissimilarIslandGame = ({
             {[[-6,-6],[null,-6],[-6,null],[null,null]].map(([t,l],i)=>(
               <div key={i} style={{ position:'absolute', zIndex:10, pointerEvents:'none', width:12, height:12, background:'#703737', ...(t!==null?{top:t}:{bottom:-6}), ...(l!==null?{left:l}:{right:-6}) }}/>
             ))}
-            <p style={{ fontSize:11, fontWeight:700, color:'#703737', margin:'0 0 16px', lineHeight:1.8 }}>USE A HINT?</p>
-            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c',fontWeight:900}}>reduce your score</span> for this problem.</p>
-            <p style={{ fontSize:8, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c',fontWeight:900}}>not be fully recorded</span> in your progress.</p>
+            <p style={{ fontSize:14, fontWeight:700, color:'#703737', margin:'0 0 16px', lineHeight:1.8 }}>USE A HINT?</p>
+            <p style={{ fontSize:11, color:'#2a1a1a', margin:'0 0 8px', lineHeight:1.9 }}>Using a hint will <span style={{color:'#b91c1c',fontWeight:900}}>reduce your score</span> for this problem.</p>
+            <p style={{ fontSize:11, color:'#2a1a1a', margin:'0 0 24px', lineHeight:1.9 }}>Your answer will <span style={{color:'#b91c1c',fontWeight:900}}>not be fully recorded</span> in your progress.</p>
             <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
               <button onClick={() => {
                 setShowHintConfirm(false);
@@ -1902,11 +1902,11 @@ const DissimilarIslandGame = ({
                 if (remaining.length === 0) { setCurrentHint('Answer the remaining inputs first.'); return; }
                 const pool = remaining[Math.floor(Math.random() * remaining.length)];
                 setCurrentHint(pool[Math.floor(Math.random() * pool.length)]);
-              }} style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
+              }} style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:12, background:'#703737', border:'4px solid #703737', color:'#e8d5b4', cursor:'pointer', borderRadius:0 }}>
                 YES, SHOW HINT
               </button>
               <button onClick={() => setShowHintConfirm(false)}
-                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:9, background:'#e8d5b4', border:'4px solid #703737', color:'#703737', cursor:'pointer', borderRadius:0 }}>
+                style={{ position:'relative', padding:'10px 20px', fontWeight:700, fontFamily:'"Press Start 2P", monospace', fontSize:12, background:'#e8d5b4', border:'4px solid #703737', color:'#703737', cursor:'pointer', borderRadius:0 }}>
                 CANCEL
               </button>
             </div>
