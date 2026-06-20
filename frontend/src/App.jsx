@@ -239,7 +239,12 @@ function App() {
 
         <Route path="/dashboard" element={
           studentId
-            ? <StudentDashboard studentId={studentId} onBack={handleBackToLobbyFromDashboard} />
+            ? <StudentDashboard
+                studentId={studentId}
+                studentNickname={studentNickname}
+                selectedCharacter={selectedCharacter}
+                onBack={handleBackToLobbyFromDashboard}
+              />
             : <Navigate to="/login" replace />
         } />
 
