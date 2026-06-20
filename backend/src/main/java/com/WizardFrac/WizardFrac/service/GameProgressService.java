@@ -242,11 +242,16 @@ public class GameProgressService {
         }
 
         double avgMultiplier = allAttempts.isEmpty() ? 1.0 : totalMultiplier / allAttempts.size();
+        Integer totalScore = gameProgressRepository.findByStudentId(studentId)
+            .map(GameProgress::getTotalScore)
+            .orElse(0);
         DiagnosticsDTO.SummaryDTO summary = new DiagnosticsDTO.SummaryDTO(
             totalCorrect,
             totalIncorrect,
             sessions.size(),
-            avgMultiplier
+            avgMultiplier,
+            totalScore,
+            getWizardRank(totalScore)
         );
 
         // Calculate competency mastery
@@ -342,5 +347,13 @@ public class GameProgressService {
         } else {
             return "Beginner";
         }
+    }
+
+    // Cumulative player title based on total score across all islands/sessions
+    public String getWizardRank(int totalScore) {
+        if (totalScore >= 6000) return "Grand Wizard";
+        if (totalScore >= 3000) return "Archmage";
+        if (totalScore >= 1000) return "Mage";
+        return "Apprentice";
     }
 }

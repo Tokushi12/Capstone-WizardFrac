@@ -125,14 +125,35 @@ public class DiagnosticsDTO {
         private Integer totalIncorrect;
         private Integer totalSessions;
         private Double averageMultiplier;
+        private Integer totalScore;
+        private String wizardRank; // Apprentice, Mage, Archmage, Grand Wizard
 
         public SummaryDTO() {}
 
-        public SummaryDTO(Integer totalCorrect, Integer totalIncorrect, Integer totalSessions, Double averageMultiplier) {
+        public SummaryDTO(Integer totalCorrect, Integer totalIncorrect, Integer totalSessions, Double averageMultiplier,
+                          Integer totalScore, String wizardRank) {
             this.totalCorrect = totalCorrect;
             this.totalIncorrect = totalIncorrect;
             this.totalSessions = totalSessions;
             this.averageMultiplier = averageMultiplier;
+            this.totalScore = totalScore;
+            this.wizardRank = wizardRank;
+        }
+
+        public Integer getTotalScore() {
+            return totalScore;
+        }
+
+        public void setTotalScore(Integer totalScore) {
+            this.totalScore = totalScore;
+        }
+
+        public String getWizardRank() {
+            return wizardRank;
+        }
+
+        public void setWizardRank(String wizardRank) {
+            this.wizardRank = wizardRank;
         }
 
         public Integer getTotalCorrect() {
