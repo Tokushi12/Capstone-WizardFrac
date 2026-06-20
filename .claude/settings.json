@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(findstr /r /c:\"WalkableArea\\\\|walkable\" frontend\\\\src\\\\pages\\\\*.css)"
-    ]
-  }
-}
