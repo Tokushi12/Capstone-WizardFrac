@@ -95,6 +95,15 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 }
 
+.profile-points {
+  margin: 0;
+  color: var(--wizard-gold);
+  font-family: var(--wizard-font);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 .profile-info .wizard-rank-badge {
   font-size: 1rem;
   padding: 0.45rem 1.2rem;
@@ -118,6 +127,7 @@
 }
 
 .badge-circle {
+  position: relative;
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -126,12 +136,45 @@
   justify-content: center;
   border: 3px solid var(--wizard-gold);
   background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 60%), var(--wizard-purple-dark);
+  cursor: help;
 }
 
 .badge-circle.badge-locked {
   opacity: 0.35;
   filter: grayscale(0.6);
   border-color: rgba(255, 255, 255, 0.35);
+}
+
+.badge-circle[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background: var(--wizard-purple-dark);
+  border: 2px solid var(--wizard-gold);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: var(--wizard-text);
+  font-family: var(--wizard-font);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  z-index: 5;
+}
+
+.badge-circle[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--wizard-gold);
+  z-index: 5;
 }
 
 .badge-icon {
@@ -156,6 +199,7 @@
 }
 
 .achievement-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -163,6 +207,36 @@
   border: 2px solid rgba(246, 184, 37, 0.35);
   border-radius: 10px;
   padding: 0.85rem 1.1rem;
+  cursor: help;
+}
+
+.achievement-row[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  background: var(--wizard-purple-dark);
+  border: 2px solid var(--wizard-gold);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  color: var(--wizard-text);
+  font-family: var(--wizard-font);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  z-index: 5;
+}
+
+.achievement-row[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 1.5rem;
+  border: 6px solid transparent;
+  border-top-color: var(--wizard-gold);
+  z-index: 5;
 }
 
 .achievement-icon {

@@ -479,14 +479,14 @@ const GameLobby = ({ studentId, studentNickname, selectedCharacter, onGameStart,
           ref={titleBoxRef}
           className={`lobby-title-box${animPhase === 'flash' ? ' anim-flash' : ''}${animPhase && animPhase !== 'flash' ? ' anim-hidden' : ''}`}
         >
-          <div style={{ position: 'absolute', top: -6,   left: -6,  width: 10, height: 10, background: '#f6b825' }} />
-          <div style={{ position: 'absolute', top: -6,   right: -6, width: 10, height: 10, background: '#f6b825' }} />
-          <div style={{ position: 'absolute', bottom: -6, left: -6,  width: 10, height: 10, background: '#f6b825' }} />
-          <div style={{ position: 'absolute', bottom: -6, right: -6, width: 10, height: 10, background: '#f6b825' }} />
-          <div style={{ position: 'absolute', top: 3,    left: 3,   width: 5,  height: 5,  background: '#f6b825' }} />
-          <div style={{ position: 'absolute', top: 3,    right: 3,  width: 5,  height: 5,  background: '#f6b825' }} />
-          <div style={{ position: 'absolute', bottom: 3,  left: 3,   width: 5,  height: 5,  background: '#f6b825' }} />
-          <div style={{ position: 'absolute', bottom: 3,  right: 3,  width: 5,  height: 5,  background: '#f6b825' }} />
+          <div style={{ position: 'absolute', top: -6,   left: -6,  width: 10, height: 10, background: '#703737' }} />
+          <div style={{ position: 'absolute', top: -6,   right: -6, width: 10, height: 10, background: '#703737' }} />
+          <div style={{ position: 'absolute', bottom: -6, left: -6,  width: 10, height: 10, background: '#703737' }} />
+          <div style={{ position: 'absolute', bottom: -6, right: -6, width: 10, height: 10, background: '#703737' }} />
+          <div style={{ position: 'absolute', top: 3,    left: 3,   width: 5,  height: 5,  background: '#703737' }} />
+          <div style={{ position: 'absolute', top: 3,    right: 3,  width: 5,  height: 5,  background: '#703737' }} />
+          <div style={{ position: 'absolute', bottom: 3,  left: 3,   width: 5,  height: 5,  background: '#703737' }} />
+          <div style={{ position: 'absolute', bottom: 3,  right: 3,  width: 5,  height: 5,  background: '#703737' }} />
           <h1 className="lobby-title">WIZARD ISLANDS</h1>
           <p className="lobby-subtitle">Choose your adventure</p>
         </div>
