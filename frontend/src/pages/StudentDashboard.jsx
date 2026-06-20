@@ -6,10 +6,10 @@ import './StudentDashboard.css';
 import LoadingScreen from '../components/LoadingScreen';
 
 const RANK_TIERS = [
-  { rank: 'Apprentice', icon: '🪄' },
-  { rank: 'Mage', icon: '🔮' },
-  { rank: 'Archmage', icon: '⚡' },
-  { rank: 'Grand Wizard', icon: '👑' },
+  { rank: 'Apprentice', icon: '🪄', hint: 'Starting rank — every wizard begins here.' },
+  { rank: 'Mage', icon: '🔮', hint: 'Reach 1,000 total score to become a Mage.' },
+  { rank: 'Archmage', icon: '⚡', hint: 'Reach 3,000 total score to become an Archmage.' },
+  { rank: 'Grand Wizard', icon: '👑', hint: 'Reach 6,000 total score to become a Grand Wizard.' },
 ];
 
 const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBack }) => {
@@ -73,6 +73,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
       description: 'Complete all the quests',
       progress: Math.min(completedStages, TOTAL_ISLAND_STAGES),
       goal: TOTAL_ISLAND_STAGES,
+      hint: 'Finish every stage (1-6) on all 3 islands — Similar, Dissimilar, and Hybrid Fractions.',
     },
     {
       id: 'spell-master',
@@ -81,6 +82,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
       description: 'Cast 100 correct spells',
       progress: Math.min(summary.totalCorrect, 100),
       goal: 100,
+      hint: 'Answer fraction spells correctly during gameplay. Every correct answer counts toward this.',
     },
     {
       id: 'mastery-mage',
@@ -89,6 +91,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
       description: 'Reach Proficient in every skill',
       progress: proficientCount,
       goal: competencies?.length || 3,
+      hint: 'Reach 80%+ accuracy in Similar Fractions, Dissimilar Fractions, and Mixed Numbers to mark each as Proficient.',
     },
   ];
 
@@ -109,6 +112,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
         />
         <div className="profile-info">
           <p className="profile-name">{studentNickname || 'Wizard'}</p>
+          <p className="profile-points">{(summary?.totalScore || 0).toLocaleString()} pts</p>
           <WizardRankBadge rank={summary?.wizardRank} />
         </div>
       </div>
@@ -123,7 +127,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
             <div
               key={tier.rank}
               className={`badge-circle ${index <= currentRankIndex ? 'badge-unlocked' : 'badge-locked'}`}
-              title={tier.rank}
+              data-tooltip={`${tier.rank} — ${tier.hint}`}
             >
               <span className="badge-icon">{tier.icon}</span>
             </div>
@@ -136,7 +140,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
         <h3 className="section-title">Achievements</h3>
         <div className="achievements-list">
           {achievements.map(a => (
-            <div key={a.id} className="achievement-row">
+            <div key={a.id} className="achievement-row" data-tooltip={a.hint}>
               <span className="achievement-icon">{a.icon}</span>
               <div className="achievement-body">
                 <p className="achievement-title">{a.title}</p>
