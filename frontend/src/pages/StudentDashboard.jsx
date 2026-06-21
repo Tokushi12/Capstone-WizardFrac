@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CompetencyMasteryCard from '../components/CompetencyMasteryCard';
 import WizardRankBadge from '../components/WizardRankBadge';
 import MisconceptionPanel from '../components/MisconceptionPanel';
+import GameMenuModal from '../components/GameMenuModal';
 import './StudentDashboard.css';
 import LoadingScreen from '../components/LoadingScreen';
 
@@ -16,6 +17,15 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
   const [diagnostics, setDiagnostics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const claimedStorageKey = `wizardfrac_claimed_badges_${studentId}`;
+  const [claimedBadges, setClaimedBadges] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(claimedStorageKey)) || [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     const fetchDiagnostics = async () => {
@@ -35,6 +45,13 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
     };
     if (studentId) fetchDiagnostics();
   }, [studentId]);
+
+  const handleClaimBadge = (badge) => {
+    if (!badge) return;
+    const updated = [...claimedBadges, badge.rank];
+    setClaimedBadges(updated);
+    localStorage.setItem(claimedStorageKey, JSON.stringify(updated));
+  };
 
   if (loading) {
     return <LoadingScreen message="LOADING PROGRESS..." />;
@@ -56,6 +73,9 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
     : 0;
 
   const currentRankIndex = Math.max(0, RANK_TIERS.findIndex(t => t.rank === summary?.wizardRank));
+  const pendingBadge = RANK_TIERS
+    .slice(0, currentRankIndex + 1)
+    .find(t => !claimedBadges.includes(t.rank)) || null;
 
   const TOTAL_ISLAND_STAGES = 18; // 3 islands x 6 stages
   const completedStages = new Set(
@@ -98,6 +118,21 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
   return (
     <div className="dashboard-container">
 
+      {pendingBadge && (
+        <GameMenuModal
+          icon={pendingBadge.icon}
+          title="New Badge Unlocked!"
+          message={`Congratulations! You've received the ${pendingBadge.rank} badge.`}
+          onClose={() => handleClaimBadge(pendingBadge)}
+        >
+          <div className="wizard-menu-actions">
+            <button className="wizard-menu-btn wizard-menu-btn-primary" onClick={() => handleClaimBadge(pendingBadge)}>
+              Claim Badge
+            </button>
+          </div>
+        </GameMenuModal>
+      )}
+
       {/* Back */}
       <div className="dashboard-header">
         <button className="back-btn" onClick={onBack}>← Back</button>
@@ -126,7 +161,7 @@ const StudentDashboard = ({ studentId, studentNickname, selectedCharacter, onBac
           {RANK_TIERS.map((tier, index) => (
             <div
               key={tier.rank}
-              className={`badge-circle ${index <= currentRankIndex ? 'badge-unlocked' : 'badge-locked'}`}
+              className={`badge-circle ${index <= currentRankIndex ? 'badge-unlocked' : 'badge-locked'} ${pendingBadge?.rank === tier.rank ? 'badge-pending' : ''}`}
               data-tooltip={`${tier.rank} — ${tier.hint}`}
             >
               <span className="badge-icon">{tier.icon}</span>
