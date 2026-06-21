@@ -32,13 +32,16 @@
 }
 
 .logout-btn {
-  padding: 5px 14px;
+  padding: 8px 14px;
   background: #e8d5b4;
   color: #703737;
   border: 2px solid #703737;
   border-radius: 0;
-  font-size: 0.85em;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6em;
   font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -395,13 +398,16 @@
 }
 
 .dashboard-btn {
-  padding: 5px 14px;
+  padding: 8px 14px;
   background: #e8d5b4;
   color: #703737;
   border: 2px solid #703737;
   border-radius: 0;
-  font-size: 0.85em;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6em;
   font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background 0.2s;
 }
